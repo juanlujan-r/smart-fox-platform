@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 
 export default function OrderSummary() {
-  const { cart, updateQuantity, getTotal } = useCartStore();
+  const { cart, updateQuantity, getTotal, processSale } = useCartStore();
   const { subtotal, tax, total } = getTotal();
+  const [loading, setLoading] = useState(false);
 
   const handleIncrease = (id: string, currentQty: number) => {
     updateQuantity(id, currentQty + 1);
@@ -13,6 +15,18 @@ export default function OrderSummary() {
 
   const handleDecrease = (id: string, currentQty: number) => {
     updateQuantity(id, Math.max(0, currentQty - 1));
+  };
+
+  const handleProcessPayment = async () => {
+    setLoading(true);
+    try {
+      await processSale();
+      alert('Venta Guardada');
+    } catch (error: unknown) {
+      alert('Error: ' + (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatCurrency = (amount: number) =>
@@ -67,8 +81,12 @@ export default function OrderSummary() {
         </div>
       </div>
 
-      <button className="w-full mt-6 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors">
-        Process Payment
+      <button
+        className="w-full mt-6 bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={handleProcessPayment}
+        disabled={cart.length === 0 || loading}
+      >
+        {loading ? 'Procesando...' : 'Cobrar'}
       </button>
     </div>
   );
