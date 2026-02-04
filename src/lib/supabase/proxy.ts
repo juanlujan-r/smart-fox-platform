@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -15,7 +15,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({
             request,
           })
@@ -35,21 +35,22 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { pathname } = request.nextUrl
+  const isAuthPage = request.nextUrl.pathname.startsWith('/login')
+  const isDashboardPage = 
+    request.nextUrl.pathname.startsWith('/dashboard') || 
+    request.nextUrl.pathname.startsWith('/pos') || 
+    request.nextUrl.pathname.startsWith('/inventory') || 
+    request.nextUrl.pathname.startsWith('/hr')
 
-  // Protected routes that require authentication
-  const protectedRoutes = ['/dashboard', '/pos', '/inventory', '/hr']
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-
-  // If user is not logged in and trying to access protected route
-  if (!user && isProtectedRoute) {
+  // Redirección 1: Si NO hay sesión y intenta entrar al sistema -> Al Login
+  if (!user && isDashboardPage) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in and trying to access login page
-  if (user && pathname === '/login') {
+  // Redirección 2: Si SÍ hay sesión e intenta entrar al Login -> Al Dashboard
+  if (user && isAuthPage) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
@@ -61,23 +62,9 @@ export async function middleware(request: NextRequest) {
   //    const myNewResponse = NextResponse.next({ request })
   // 2. Copy over the cookies, like so:
   //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
+  //  //
   // 3. Change the myNewResponse object instead of the supabaseResponse object
   //    before returning it.
 
   return supabaseResponse
-}
-
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - login (login page)
-     * - api (API routes)
-     * Feel free to modify this pattern to include more paths.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|login|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
 }
