@@ -46,29 +46,21 @@ export default function ProductForm({ initialData, onSuccess }: ProductFormProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-
-    setLoading(true);
-    try {
-      if (initialData) {
-        // Update
-        const { error } = await supabase
-          .from('products')
-          .update(formData)
-          .eq('id', initialData.id);
-        if (error) throw error;
-      } else {
-        // Insert
-        const { error } = await supabase
-          .from('products')
-          .insert(formData);
-        if (error) throw error;
+    // Asegúrate de que los campos coincidan con los de tu SQL
+    const { error } = await supabase.from('products').insert([
+      { 
+        name: formData.name, 
+        price: formData.price, 
+        stock: formData.stock, 
+        category_id: 1, // Por ahora fijo o cámbialo a un select
+        image_url: formData.image_url 
       }
-      onSuccess();
-    } catch (error: unknown) {
-      alert('Error: ' + (error as Error).message);
-    } finally {
-      setLoading(false);
+    ]);
+    
+    if (!error) {
+      onSuccess(); // Esta función debe llamar al fetchProducts de la página principal
+    } else {
+      alert("Error: " + error.message);
     }
   };
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Store, Package, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Store, Package, Users, LogOut, Box } from 'lucide-react';
 
 const menuItems = [
   { name: 'Tablero', icon: LayoutDashboard, href: '/dashboard' },
@@ -15,12 +15,15 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex w-64 bg-[#1f2937] text-white flex-col h-screen sticky top-0">
-      <div className="p-6 border-b border-gray-700">
-        <div className="flex items-center gap-3 bg-white p-2 rounded-xl w-fit">
-           <img src="https://cdn-icons-png.flaticon.com/512/809/809052.png" alt="Logo" className="w-8 h-8" />
+    <aside className="hidden md:flex w-64 bg-[#1a202c] text-white flex-col h-screen sticky top-0">
+      <div className="p-6 border-b border-gray-700/50 flex items-center gap-3">
+        <div className="bg-[#FF8C00] p-2 rounded-xl shadow-lg shadow-orange-900/20">
+          <Box className="text-white w-6 h-6" />
         </div>
-        <span className="block mt-3 font-bold text-lg tracking-wide">Smart Fox</span>
+        <div>
+          <h1 className="text-white font-black text-xl tracking-tighter leading-none">SMART FOX</h1>
+          <p className="text-gray-400 text-[10px] tracking-[0.2em] font-bold uppercase">Solutions</p>
+        </div>
       </div>
 
       <nav className="flex-1 mt-6 px-3 space-y-1">

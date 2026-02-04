@@ -17,6 +17,15 @@ body {
 
 @layer components {
   .glass-panel {
-    @apply bg-white border border-gray-200 shadow-sm backdrop-blur-md;
+    @apply bg-white border border-gray-200 shadow-sm backdrop-blur-xl;
+  }
+  
+  .fox-card {
+    @apply bg-white rounded-2xl shadow-sm;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  }
+  
+  .fox-button {
+    @apply bg-orange-500 text-white font-bold active:scale-95 transition-transform;
   }
 }

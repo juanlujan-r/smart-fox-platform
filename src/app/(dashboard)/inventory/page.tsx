@@ -30,28 +30,6 @@ export default function InventoryPage() {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-  const deleteProduct = async (productId: string) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
-
-    try {
-      const { error } = await supabase.from('products').delete().eq('id', productId);
-
-      if (error) {
-        if (error.code === '23503') { // foreign key violation
-          alert('No se puede eliminar el producto porque está vinculado a pedidos existentes.');
-        } else {
-          alert('Error al eliminar el producto: ' + error.message);
-        }
-        return;
-      }
-
-      // Refresh list
-      setProducts(prev => prev.filter(p => p.id !== productId));
-    } catch (error: unknown) {
-      alert('Error: ' + (error as Error).message);
-    }
-  };
-
   if (loading) {
     return (
       <div className="p-6">
@@ -123,7 +101,7 @@ export default function InventoryPage() {
                       <button className="p-1 text-blue-600 hover:text-blue-800 transition-colors">
                         <Edit className="w-5 h-5" />
                       </button>
-                      <button className="p-1 text-red-600 hover:text-red-800 transition-colors" onClick={() => deleteProduct(product.id)}>
+                      <button className="p-1 text-red-600 hover:text-red-800 transition-colors">
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </div>

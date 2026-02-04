@@ -9,7 +9,7 @@ interface CartState {
   updateQuantity: (id: string, qty: number) => void;
   clearCart: () => void;
   getTotal: () => { subtotal: number; tax: number; total: number };
-  processSale: (userId?: string) => Promise<{ success: boolean }>;
+  processSale: () => Promise<{ success: boolean; message?: string }>;
 }
 
 export const useCartStore = create<CartState>((set, get) => ({
@@ -31,50 +31,38 @@ export const useCartStore = create<CartState>((set, get) => ({
     const tax = subtotal * 0.08;
     return { subtotal, tax, total: subtotal + tax };
   },
-  processSale: async (userId?: string) => {
-    const { cart } = get();
-    if (cart.length === 0) {
-      throw new Error('Cart is empty');
+  processSale: async () => {
+    const { cart, getTotal, clearCart } = get();
+    const { total, tax } = getTotal();
+
+    if (cart.length === 0) return { success: false, message: "Carrito vacío" };
+
+    try {
+      // 1. Crear la Orden
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([{ total, tax, status: 'completed' }])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Crear los items (detalles)
+      const orderItems = cart.map(item => ({
+        order_id: order.id,
+        product_id: item.id,
+        quantity: item.quantity,
+        unit_price: item.price,
+        subtotal: item.price * item.quantity
+      }));
+
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+      if (itemsError) throw itemsError;
+
+      clearCart();
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, message: error.message };
     }
-    const { total, tax } = get().getTotal();
-
-    // Insert order
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        total,
-        tax,
-        status: 'completed',
-        ...(userId && { user_id: userId }),
-      })
-      .select('id')
-      .single();
-
-    if (orderError) {
-      throw new Error(`Failed to create order: ${orderError.message}`);
-    }
-
-    const newOrderId = orderData.id;
-
-    // Insert order items
-    const orderItems = cart.map((item) => ({
-      order_id: newOrderId,
-      product_id: item.id,
-      quantity: item.quantity,
-      price: item.price,
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) {
-      throw new Error(`Failed to create order items: ${itemsError.message}`);
-    }
-
-    // Clear cart
-    get().clearCart();
-
-    return { success: true };
   },
 }));
