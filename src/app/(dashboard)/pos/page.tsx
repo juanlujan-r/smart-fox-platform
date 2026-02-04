@@ -1,43 +1,58 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import ProductCard from '@/components/pos/ProductCard';
 import OrderSummary from './OrderSummary';
 import { Product } from '@/types/database';
-
-const products: Product[] = [
-  {
-    id: '1',
-    name: 'Coffee',
-    price: 3.5,
-    stock: 10,
-    category_id: 'beverages',
-  },
-  {
-    id: '2',
-    name: 'Cake',
-    price: 5.0,
-    stock: 5,
-    category_id: 'desserts',
-  },
-  {
-    id: '3',
-    name: 'Sandwich',
-    price: 7.0,
-    stock: 8,
-    category_id: 'food',
-  },
-];
+import { supabase } from '@/lib/supabase';
 
 export default function POSPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase.from('products').select('*');
+      if (error) {
+        console.error('Error fetching products:', error);
+      } else {
+        setProducts(data || []);
+      }
+      setLoading(false);
+    };
+    fetchProducts();
+  }, []);
+
+  const renderSkeleton = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="bg-gray-200 rounded-lg shadow-md overflow-hidden animate-pulse">
+          <div className="aspect-square bg-gray-300"></div>
+          <div className="p-4 space-y-2">
+            <div className="h-4 bg-gray-300 rounded"></div>
+            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+            <div className="h-6 bg-gray-300 rounded w-1/2"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">Point of Sale</h1>
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 lg:flex-[2]">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            {loading ? (
+              renderSkeleton()
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex-1 lg:flex-[1]">
             <div className="sticky top-6">
