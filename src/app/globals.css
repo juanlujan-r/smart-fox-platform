@@ -1,0 +1,22 @@
+@reference "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+body {
+  color: #111827;
+  background-color: #f3f4f6; 
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white border border-gray-200 shadow-sm backdrop-blur-md;
+  }
+}
