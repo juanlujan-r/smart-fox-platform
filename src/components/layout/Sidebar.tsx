@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Box, Calendar, FileText, UserCircle, Users, BarChart3, ShoppingBag, LogOut } from 'lucide-react';
+import { Box, Calendar, FileText, UserCircle, Users, BarChart3, ShoppingBag, LayoutDashboard, LogOut } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Sidebar() {
@@ -22,6 +22,7 @@ export default function Sidebar() {
   }, []);
 
   const menu = [
+    { name: 'Panel Principal', icon: LayoutDashboard, path: '/dashboard', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Mis Turnos', icon: Calendar, path: '/shifts', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Reportar/Solicitar', icon: FileText, path: '/requests', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Mi Información', icon: UserCircle, path: '/profile', roles: ['empleado', 'supervisor', 'gerente'] },
