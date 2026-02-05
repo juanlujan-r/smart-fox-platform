@@ -83,3 +83,35 @@ export interface ProfileRow {
   academic_data?: AcademicData | null;
   sizes_data?: SizesData | null;
 }
+
+// Shifts & attendance (Mis Turnos)
+export interface ScheduleRow {
+  id: string;
+  user_id: string;
+  scheduled_date: string; // YYYY-MM-DD
+  start_time: string;    // HH:MM or HH:MM:SS
+  end_time: string;
+  created_at?: string;
+}
+
+export interface AttendanceLogRow {
+  id: string;
+  user_id: string;
+  state?: string;       // entrada, offline, descanso, etc.
+  type?: string;        // alternative to state
+  created_at: string;
+  notes?: string | null;
+  location?: string | null;
+}
+
+export interface ShiftExchangeRequestRow {
+  id: string;
+  user_id: string;
+  original_date: string;
+  requested_date: string;
+  requested_start_time: string;
+  requested_end_time: string;
+  reason?: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at?: string;
+}

@@ -1,183 +1,77 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/lib/supabase";
-import { useToast } from "@/context/ToastContext";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Clock, Coffee, Utensils, Users, LogOut, AlertTriangle } from 'lucide-react';
 
-type LogRecord = {
-  id?: string;
-  user_id?: string;
-  type: string;
-  created_at?: string;
-};
+const STATES = [
+  { id: 'entrada', label: 'Entrada', icon: Clock, color: 'bg-green-500' },
+  { id: 'descanso', label: 'Descanso', icon: Coffee, color: 'bg-yellow-500' },
+  { id: 'almuerzo', label: 'Almuerzo', icon: Utensils, color: 'bg-blue-500' },
+  { id: 'reunion', label: 'Reunión', icon: Users, color: 'bg-purple-500' },
+  { id: 'offline', label: 'Offline', icon: LogOut, color: 'bg-gray-500' },
+];
 
 export default function ShiftControl() {
-  const { pushToast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [lastLog, setLastLog] = useState<LogRecord | null>(null);
-  const [alerted, setAlerted] = useState(false);
-  const [notes, setNotes] = useState("");
-  const [location, setLocation] = useState("");
-  const intervalRef = useRef<number | null>(null);
+  const [currentState, setCurrentState] = useState('offline');
+  const [startTime, setStartTime] = useState<number | null>(null);
+  const [overtimeAlert, setOvertimeAlert] = useState(false);
 
-  async function fetchLastLog() {
-    try {
-      const user = await supabase.auth.getUser();
-      const userId = user.data.user?.id;
-      if (!userId) return setLastLog(null);
-
-      const { data, error } = await supabase
-        .from("attendance_logs")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error("fetchLastLog error", error);
-        pushToast("Error fetching last log");
-        return;
-      }
-
-      setLastLog(data ?? null);
-      setAlerted(false);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function logEvent(type: string) {
-    setLoading(true);
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-      if (!userId) {
-        pushToast("No authenticated user.");
-        return;
-      }
-
-      const payload: Record<string, any> = { user_id: userId, type };
-      if (notes) payload.notes = notes;
-      if (location) payload.location = location;
-
-      const { error } = await supabase.from("attendance_logs").insert([payload]);
-      if (error) {
-        console.error("insert error", error);
-        pushToast("Error saving attendance: " + (error.message ?? ""));
-        return;
-      }
-
-      // Refresh last log after insert
-      await fetchLastLog();
-
-      if (type === "Offline") {
-        setLastLog(null);
-      }
-
-      pushToast(`${type} recorded`);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Check active session and alert if > 8 hours
-  // fetch once on mount
   useEffect(() => {
-    fetchLastLog();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // Alerta de 8 horas (28800000 ms)
+    const interval = setInterval(() => {
+      if (currentState === 'entrada' && startTime) {
+        const elapsed = Date.now() - startTime;
+        if (elapsed > 28800000) setOvertimeAlert(true);
+      }
+    }, 60000); // Revisar cada minuto
+    return () => clearInterval(interval);
+  }, [currentState, startTime]);
 
-  // timer to check active Entrada sessions
-  useEffect(() => {
-    function checkTimer() {
-      if (!lastLog) return;
-      if (lastLog.type !== "Entrada") return;
+  const handleStateChange = async (newState: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-      const start = new Date(lastLog.created_at ?? "");
-      if (Number.isNaN(start.getTime())) return;
-      const elapsed = Date.now() - start.getTime();
-      const eightHours = 8 * 60 * 60 * 1000;
-      if (elapsed > eightHours && !alerted) {
-        setAlerted(true);
-        pushToast("Session exceeded 8 hours — please check your shift.");
+    const { error } = await supabase.from('attendance_logs').insert([
+      { user_id: user.id, state: newState }
+    ]);
+
+    if (!error) {
+      setCurrentState(newState);
+      if (newState === 'entrada') {
+        setStartTime(Date.now());
+        setOvertimeAlert(false);
+      } else if (newState === 'offline') {
+        setStartTime(null);
       }
     }
-
-    checkTimer();
-    intervalRef.current = window.setInterval(checkTimer, 60_000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastLog, alerted]);
-
-  const buttonClass =
-    "bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded px-4 py-2 shadow-sm";
+  };
 
   return (
-    <div className="max-w-md mx-auto bg-white/6 border border-white/10 backdrop-blur-md rounded-lg p-6">
-      <h3 className="text-lg font-bold mb-3">Control de Turno</h3>
-
-      <div className="flex gap-2 flex-wrap mb-4">
-        <button
-          className={buttonClass}
-          onClick={() => logEvent("Offline")}
-          disabled={loading}
-        >
-          Offline
-        </button>
-
-        <button
-          className={buttonClass}
-          onClick={() => logEvent("Entrada")}
-          disabled={loading}
-        >
-          Entrada
-        </button>
-
-        <button
-          className={buttonClass}
-          onClick={() => logEvent("Descanso")}
-          disabled={loading}
-        >
-          Descanso
-        </button>
-
-        <button
-          className={buttonClass}
-          onClick={() => logEvent("Almuerzo")}
-          disabled={loading}
-        >
-          Almuerzo
-        </button>
-
-        <button
-          className={buttonClass}
-          onClick={() => logEvent("Reunión")}
-          disabled={loading}
-        >
-          Reunión
-        </button>
+    <div className="fox-card p-6 space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="font-black text-gray-800 uppercase tracking-tighter">Control de Estado</h3>
+        {overtimeAlert && (
+          <div className="flex items-center gap-2 text-red-500 animate-pulse">
+            <AlertTriangle className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase">Alerta: +8h Activo</span>
+          </div>
+        )}
       </div>
 
-      <div className="mb-4 flex gap-2">
-        <input
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Notas (opcional)"
-          className="flex-1 rounded px-3 py-2 bg-white/5 border border-white/10 text-sm"
-        />
-        <input
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          placeholder="Ubicación (opcional)"
-          className="w-40 rounded px-3 py-2 bg-white/5 border border-white/10 text-sm"
-        />
-      </div>
-
-      <div className="text-sm text-gray-300">
-        <div>Último registro: {lastLog ? `${lastLog.type} — ${new Date(lastLog.created_at ?? "").toLocaleString()}` : "Ninguno"}</div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {STATES.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => handleStateChange(s.id)}
+            className={`p-4 rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95 ${
+              currentState === s.id ? `${s.color} text-white shadow-lg` : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+            }`}
+          >
+            <s.icon className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">{s.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
