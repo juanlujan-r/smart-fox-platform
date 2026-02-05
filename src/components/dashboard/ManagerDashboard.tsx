@@ -27,7 +27,6 @@ interface DashboardData {
 }
 
 interface DisciplinaryAction {
-  id: string;
   user_id: string;
   status: string;
 }
@@ -87,7 +86,7 @@ const ManagerDashboard: React.FC = () => {
       // Fetch disciplinary actions
       const { data: disciplinary, error: disciplinaryError } = await supabase
         .from('disciplinary_actions')
-        .select('user_id, status');
+        .select('id, user_id, status');
 
       if (disciplinaryError) throw disciplinaryError;
 
@@ -98,7 +97,7 @@ const ManagerDashboard: React.FC = () => {
       });
 
       const disciplinaryCount: { [key: string]: number } = {};
-      disciplinary?.forEach((action: DisciplinaryAction) => {
+      disciplinary?.forEach((action: any) => {
         disciplinaryCount[action.user_id] = (disciplinaryCount[action.user_id] || 0) + 1;
       });
 
@@ -305,7 +304,7 @@ const ManagerDashboard: React.FC = () => {
               <XAxis dataKey="month" />
               <YAxis />
               <Tooltip
-                formatter={(value) => `$${value.toLocaleString()}`}
+                formatter={(value) => `$${Number(value).toLocaleString()}`}
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #ccc',
