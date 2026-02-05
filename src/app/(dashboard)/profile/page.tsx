@@ -1,515 +1,567 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+"use client";
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useToast } from '@/context/ToastContext';
-import {
-  User,
-  Briefcase,
-  GraduationCap,
-  Heart,
+import { 
+  User, 
+  Heart, 
+  Shirt, 
+  FileText, 
+  Save, 
+  Loader2, 
+  AlertCircle,
   Phone,
-  Shirt,
-  Save,
-  Plus,
-  Trash2,
+  MapPin,
+  Building2,
+  Briefcase,
+  Calendar
 } from 'lucide-react';
-import type {
-  PersonalData,
-  AcademicData,
-  ExperienceEntry,
-  EducationEntry,
-  MedicalData,
-  EmergencyContact,
-  SizesData,
-} from '@/types/database';
+import { useToast } from '@/context/ToastContext';
 
-const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-const PANTS_SIZES = ['28', '30', '32', '34', '36', '38', '40'];
-const SHOE_SIZES = ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
-const GLOVE_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
+interface PersonalData {
+  phone?: string;
+  address?: string;
+  city?: string;
+  emergency_name?: string;
+  emergency_phone?: string;
+  emergency_relation?: string;
+}
 
-const defaultPersonal: PersonalData = { fullName: '', ssn: '', dependents: 0, socialSecurity: '' };
-const defaultAcademic: AcademicData = { experience: [], education: [] };
-const defaultMedical: MedicalData = {
-  bloodType: '',
-  allergies: '',
-  medicalConditions: [],
-  eps: '',
-  arl: '',
-  emergencyContact: { name: '', phone: '', relation: '' },
-};
-const defaultSizes: SizesData = { shirt: '', pants: '', shoes: '', gloves: '' };
+interface MedicalData {
+  eps?: string;
+  arl?: string;
+  blood_type?: string;
+  allergies?: string;
+  pension?: string;
+}
+
+interface SizesData {
+  shirt?: string;
+  pants?: string;
+  shoes?: string;
+}
+
+interface Profile {
+  id: string;
+  full_name?: string;
+  document_id?: string;
+  document_type?: string;
+  hiring_date?: string;
+  role?: string;
+  personal_data?: PersonalData;
+  medical_data?: MedicalData;
+  sizes_data?: SizesData;
+}
+
+const DOCUMENT_TYPES = [
+  'Cédula de Ciudadanía',
+  'Pasaporte',
+  'Cédula de Extranjería',
+  'Documento de Identificación',
+];
+
+const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
+const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+const PANTS_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44'];
+const SHOE_SIZES = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'];
+
 
 export default function ProfilePage() {
-  const { pushToast } = useToast();
-  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'personal' | 'academic' | 'medical' | 'sizes'>('personal');
+  const [activeTab, setActiveTab] = useState('personal');
+  const { pushToast } = useToast();
 
-  const [personal, setPersonal] = useState<PersonalData>(defaultPersonal);
-  const [academic, setAcademic] = useState<AcademicData>(defaultAcademic);
-  const [medical, setMedical] = useState<MedicalData>(defaultMedical);
-  const [sizes, setSizes] = useState<SizesData>(defaultSizes);
+  const [profile, setProfile] = useState<Profile>({
+    id: '',
+    full_name: '',
+    document_id: '',
+    document_type: 'Cédula de Ciudadanía',
+    hiring_date: '',
+    role: '',
+    personal_data: {
+      phone: '',
+      address: '',
+      city: '',
+      emergency_name: '',
+      emergency_phone: '',
+      emergency_relation: '',
+    },
+    medical_data: {
+      eps: '',
+      arl: '',
+      blood_type: '',
+      allergies: '',
+      pension: '',
+    },
+    sizes_data: {
+      shirt: 'M',
+      pants: '32',
+      shoes: '40',
+    },
+  });
 
   useEffect(() => {
-    const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-      const { data } = await supabase
-        .from('profiles')
-        .select('personal_data, medical_data, academic_data, sizes_data')
-        .eq('id', user.id)
-        .single();
-      if (data) {
-        if (data.personal_data && typeof data.personal_data === 'object')
-          setPersonal({ ...defaultPersonal, ...data.personal_data } as PersonalData);
-        if (data.medical_data && typeof data.medical_data === 'object')
-          setMedical({
-            ...defaultMedical,
-            ...data.medical_data,
-            emergencyContact: { ...defaultMedical.emergencyContact!, ...(data.medical_data as MedicalData).emergencyContact },
-          } as MedicalData);
-        if (data.academic_data && typeof data.academic_data === 'object')
-          setAcademic({
-            experience: (data.academic_data as AcademicData).experience ?? [],
-            education: (data.academic_data as AcademicData).education ?? [],
-          });
-        if (data.sizes_data && typeof data.sizes_data === 'object')
-          setSizes({ ...defaultSizes, ...data.sizes_data } as SizesData);
-      }
-      setLoading(false);
-    };
-    load();
+    fetchProfile();
   }, []);
 
-  const handleSave = async () => {
-    if (!userId) return;
-    setSaving(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        personal_data: personal,
-        medical_data: medical,
-        academic_data: academic,
-        sizes_data: sizes,
-      })
-      .eq('id', userId);
-    setSaving(false);
-    if (error) {
-      pushToast('Error al guardar: ' + error.message, 'error');
-      return;
+  const fetchProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (data) {
+        setProfile({
+          ...profile,
+          ...data,
+          personal_data: {
+            ...profile.personal_data,
+            ...(data.personal_data || {}),
+          },
+          medical_data: {
+            ...profile.medical_data,
+            ...(data.medical_data || {}),
+          },
+          sizes_data: {
+            ...profile.sizes_data,
+            ...(data.sizes_data || {}),
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      pushToast('Error al cargar perfil', 'error');
+    } finally {
+      setLoading(false);
     }
-    pushToast('Información guardada correctamente', 'success');
   };
 
-  const addExperience = () =>
-    setAcademic((a) => ({
-      ...a,
-      experience: [...a.experience, { company: '', role: '', startDate: '', endDate: '' }],
-    }));
-  const removeExperience = (i: number) =>
-    setAcademic((a) => ({ ...a, experience: a.experience.filter((_, idx) => idx !== i) }));
-  const updateExperience = (i: number, field: keyof ExperienceEntry, value: string) =>
-    setAcademic((a) => ({
-      ...a,
-      experience: a.experience.map((e, idx) => (idx === i ? { ...e, [field]: value } : e)),
-    }));
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        pushToast('Usuario no autenticado', 'error');
+        return;
+      }
 
-  const addEducation = () =>
-    setAcademic((a) => ({
-      ...a,
-      education: [...a.education, { degree: '', institution: '', date: '' }],
-    }));
-  const removeEducation = (i: number) =>
-    setAcademic((a) => ({ ...a, education: a.education.filter((_, idx) => idx !== i) }));
-  const updateEducation = (i: number, field: keyof EducationEntry, value: string) =>
-    setAcademic((a) => ({
-      ...a,
-      education: a.education.map((e, idx) => (idx === i ? { ...e, [field]: value } : e)),
-    }));
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profile.full_name,
+          document_id: profile.document_id,
+          document_type: profile.document_type,
+          personal_data: profile.personal_data,
+          medical_data: profile.medical_data,
+          sizes_data: profile.sizes_data,
+        })
+        .eq('id', user.id);
 
-  const setMedicalCondition = (value: string) =>
-    setMedical((m) => ({
-      ...m,
-      medicalConditions: value ? value.split(',').map((s) => s.trim()).filter(Boolean) : [],
-    }));
+      if (error) {
+        throw error;
+      }
 
-  const tabs = [
-    { id: 'personal' as const, label: 'Personal', icon: User },
-    { id: 'academic' as const, label: 'Laboral y Académico', icon: Briefcase },
-    { id: 'medical' as const, label: 'Médico y Emergencias', icon: Heart },
-    { id: 'sizes' as const, label: 'Dotación', icon: Shirt },
-  ];
+      pushToast('Perfil actualizado correctamente', 'success');
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      pushToast('Error al guardar perfil: ' + error.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updatePersonalData = (field: keyof PersonalData, value: string) => {
+    setProfile({
+      ...profile,
+      personal_data: {
+        ...profile.personal_data,
+        [field]: value,
+      },
+    });
+  };
+
+  const updateMedicalData = (field: keyof MedicalData, value: string) => {
+    setProfile({
+      ...profile,
+      medical_data: {
+        ...profile.medical_data,
+        [field]: value,
+      },
+    });
+  };
+
+  const updateSizesData = (field: keyof SizesData, value: string) => {
+    setProfile({
+      ...profile,
+      sizes_data: {
+        ...profile.sizes_data,
+        [field]: value,
+      },
+    });
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#FF8C00] border-t-transparent" />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-[#FF8C00] mx-auto mb-3" />
+          <p className="text-gray-600">Cargando perfil...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Mi Información</h1>
-        <p className="text-gray-500 mt-1">Gestiona tu perfil en Smart Fox ERP</p>
-      </header>
-
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6 p-1 bg-white rounded-2xl shadow-[0_4px_14px_rgba(0,0,0,0.06)] border border-gray-100">
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-all ${
-              activeTab === id
-                ? 'bg-[#FF8C00] text-white shadow-md shadow-[#FF8C00]/30'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
+    <div className="max-w-6xl mx-auto pb-20">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-8">
+        <div>
+          <h1 className="text-4xl font-black text-gray-900 dark:text-white">Mi Perfil</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Gestiona tu información personal y profesional</p>
+        </div>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 bg-[#FF8C00] hover:bg-[#e67d00] disabled:opacity-50 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-[#FF8C00]/25 transition-all"
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {saving ? 'Guardando...' : 'Guardar Cambios'}
+        </button>
       </div>
 
-      {/* Panel */}
-      <div className="bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.06)] border border-gray-100 p-6 md:p-8">
-        {/* Personal */}
-        {activeTab === 'personal' && (
-          <div className="space-y-5">
-            <div className="flex items-center gap-2 text-gray-700 mb-4">
-              <User className="w-5 h-5 text-[#FF8C00]" />
-              <h2 className="text-lg font-bold">Datos personales</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">Nombre completo</span>
-                <input
-                  type="text"
-                  value={personal.fullName ?? ''}
-                  onChange={(e) => setPersonal((p) => ({ ...p, fullName: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 focus:border-[#FF8C00] outline-none transition"
-                  placeholder="Ej. Juan Pérez"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">Cédula (SSN)</span>
-                <input
-                  type="text"
-                  value={personal.ssn ?? ''}
-                  onChange={(e) => setPersonal((p) => ({ ...p, ssn: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 focus:border-[#FF8C00] outline-none transition"
-                  placeholder="Ej. 123456789"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">N° de dependientes</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={personal.dependents ?? 0}
-                  onChange={(e) => setPersonal((p) => ({ ...p, dependents: parseInt(e.target.value, 10) || 0 }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 focus:border-[#FF8C00] outline-none transition"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">Seguridad social</span>
-                <input
-                  type="text"
-                  value={personal.socialSecurity ?? ''}
-                  onChange={(e) => setPersonal((p) => ({ ...p, socialSecurity: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 focus:border-[#FF8C00] outline-none transition"
-                  placeholder="Número de afiliación"
-                />
-              </label>
-            </div>
+      {/* Tabs */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Sidebar Tabs */}
+        <div className="lg:col-span-1">
+          <div className="space-y-2 sticky top-6">
+            {[
+              { id: 'personal', label: 'Datos Personales', icon: User },
+              { id: 'legal', label: 'Información Legal', icon: Briefcase },
+              { id: 'medical', label: 'Información Médica', icon: Heart },
+              { id: 'sizes', label: 'Tallas de Dotación', icon: Shirt },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-[#FF8C00] text-white shadow-lg'
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-[#FF8C00]'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                {tab.label}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
-        {/* Laboral y Académico */}
-        {activeTab === 'academic' && (
-          <div className="space-y-8">
-            <div className="flex items-center gap-2 text-gray-700">
-              <Briefcase className="w-5 h-5 text-[#FF8C00]" />
-              <h2 className="text-lg font-bold">Experiencia laboral</h2>
-            </div>
-            <div className="space-y-4">
-              {academic.experience.map((exp, i) => (
-                <div key={i} className="p-4 rounded-xl bg-gray-50/80 border border-gray-100 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-semibold text-[#FF8C00] uppercase tracking-wide">Experiencia {i + 1}</span>
-                    <button type="button" onClick={() => removeExperience(i)} className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+        {/* Content Area */}
+        <div className="lg:col-span-3">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-8 shadow-sm">
+            {/* Personal Data Tab */}
+            {activeTab === 'personal' && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                    <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Datos Personales</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Información de contacto y residencia</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <Phone className="w-4 h-4" /> Teléfono Móvil
+                    </label>
                     <input
-                      placeholder="Empresa"
-                      value={exp.company}
-                      onChange={(e) => updateExperience(i, 'company', e.target.value)}
-                      className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none text-sm"
+                      type="tel"
+                      value={profile.personal_data?.phone || ''}
+                      onChange={(e) => updatePersonalData('phone', e.target.value)}
+                      placeholder="+57 300 1234567"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <MapPin className="w-4 h-4" /> Dirección de Residencia
+                    </label>
                     <input
-                      placeholder="Cargo / Rol"
-                      value={exp.role}
-                      onChange={(e) => updateExperience(i, 'role', e.target.value)}
-                      className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none text-sm"
+                      type="text"
+                      value={profile.personal_data?.address || ''}
+                      onChange={(e) => updatePersonalData('address', e.target.value)}
+                      placeholder="Calle 10 # 40-50, Apto 301"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <Building2 className="w-4 h-4" /> Ciudad
+                    </label>
                     <input
-                      placeholder="Fecha inicio (ej. 2020-01)"
-                      value={exp.startDate}
-                      onChange={(e) => updateExperience(i, 'startDate', e.target.value)}
-                      className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none text-sm"
+                      type="text"
+                      value={profile.personal_data?.city || ''}
+                      onChange={(e) => updatePersonalData('city', e.target.value)}
+                      placeholder="Medellín"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
                     />
+                  </div>
+
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mt-6">
+                    <h4 className="font-bold text-amber-900 dark:text-amber-200 mb-3 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5" /> Contacto de Emergencia
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        value={profile.personal_data?.emergency_name || ''}
+                        onChange={(e) => updatePersonalData('emergency_name', e.target.value)}
+                        placeholder="Nombre completo"
+                        className="px-4 py-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-amber-400 outline-none"
+                      />
+                      <input
+                        type="tel"
+                        value={profile.personal_data?.emergency_phone || ''}
+                        onChange={(e) => updatePersonalData('emergency_phone', e.target.value)}
+                        placeholder="Teléfono de contacto"
+                        className="px-4 py-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-amber-400 outline-none"
+                      />
+                      <input
+                        type="text"
+                        value={profile.personal_data?.emergency_relation || ''}
+                        onChange={(e) => updatePersonalData('emergency_relation', e.target.value)}
+                        placeholder="Relación (Familiar, Amigo, etc)"
+                        className="px-4 py-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-amber-400 outline-none md:col-span-2"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Legal Info Tab (Read Only) */}
+            {activeTab === 'legal' && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                    <Briefcase className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Información Legal</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Datos de identificación y contrato (Solo lectura)</p>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
+                  <p className="text-sm text-blue-900 dark:text-blue-200">
+                    Esta información está vinculada a tu cuenta y solo puede ser modificada por el departamento de RRHH.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Documento de Identidad</label>
                     <input
-                      placeholder="Fecha fin (ej. 2023-12)"
-                      value={exp.endDate}
-                      onChange={(e) => updateExperience(i, 'endDate', e.target.value)}
-                      className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none text-sm"
+                      type="text"
+                      value={profile.document_id || 'No registrado'}
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 cursor-not-allowed font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tipo de Documento</label>
+                    <select
+                      value={profile.document_type || 'Cédula de Ciudadanía'}
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                    >
+                      {DOCUMENT_TYPES.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" /> Fecha de Ingreso
+                    </label>
+                    <input
+                      type="date"
+                      value={profile.hiring_date || ''}
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Cargo Actual</label>
+                    <input
+                      type="text"
+                      value={profile.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) : 'No asignado'}
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 cursor-not-allowed"
                     />
                   </div>
                 </div>
-              ))}
-              <button
-                type="button"
-                onClick={addExperience}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-gray-600 hover:border-[#FF8C00] hover:text-[#FF8C00] font-medium text-sm transition-colors"
-              >
-                <Plus className="w-4 h-4" /> Agregar experiencia
-              </button>
-            </div>
-
-            <div className="pt-6 border-t border-gray-100">
-              <div className="flex items-center gap-2 text-gray-700 mb-4">
-                <GraduationCap className="w-5 h-5 text-[#FF8C00]" />
-                <h2 className="text-lg font-bold">Formación académica</h2>
               </div>
-              <div className="space-y-4">
-                {academic.education.map((edu, i) => (
-                  <div key={i} className="p-4 rounded-xl bg-gray-50/80 border border-gray-100 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <span className="text-xs font-semibold text-[#FF8C00] uppercase tracking-wide">Formación {i + 1}</span>
-                      <button type="button" onClick={() => removeEducation(i)} className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <input
-                        placeholder="Título / Grado"
-                        value={edu.degree}
-                        onChange={(e) => updateEducation(i, 'degree', e.target.value)}
-                        className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none text-sm"
-                      />
-                      <input
-                        placeholder="Institución"
-                        value={edu.institution}
-                        onChange={(e) => updateEducation(i, 'institution', e.target.value)}
-                        className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none text-sm"
-                      />
-                      <input
-                        placeholder="Fecha (ej. 2019)"
-                        value={edu.date}
-                        onChange={(e) => updateEducation(i, 'date', e.target.value)}
-                        className="px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none text-sm md:col-span-2"
-                      />
-                    </div>
+            )}
+
+            {/* Medical Info Tab */}
+            {activeTab === 'medical' && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-pink-100 dark:bg-pink-900 rounded-lg">
+                    <Heart className="w-6 h-6 text-pink-600 dark:text-pink-400" />
                   </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addEducation}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-gray-300 text-gray-600 hover:border-[#FF8C00] hover:text-[#FF8C00] font-medium text-sm transition-colors"
-                >
-                  <Plus className="w-4 h-4" /> Agregar formación
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Información Médica</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Datos de afiliaciones y condiciones médicas</p>
+                  </div>
+                </div>
 
-        {/* Médico y Emergencias */}
-        {activeTab === 'medical' && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 text-gray-700 mb-4">
-              <Heart className="w-5 h-5 text-[#FF8C00]" />
-              <h2 className="text-lg font-bold">Médico y emergencias</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">Tipo de sangre</span>
-                <select
-                  value={medical.bloodType ?? ''}
-                  onChange={(e) => setMedical((m) => ({ ...m, bloodType: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 focus:border-[#FF8C00] outline-none transition"
-                >
-                  <option value="">Seleccionar</option>
-                  {BLOOD_TYPES.map((b) => (
-                    <option key={b} value={b}>{b}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="block md:col-span-1">
-                <span className="text-sm font-medium text-gray-600">Alergias</span>
-                <input
-                  type="text"
-                  value={medical.allergies ?? ''}
-                  onChange={(e) => setMedical((m) => ({ ...m, allergies: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none transition"
-                  placeholder="Ej. Penicilina, polen"
-                />
-              </label>
-              <label className="block md:col-span-2">
-                <span className="text-sm font-medium text-gray-600">Condiciones médicas (Diabetes, hipertensión, etc.)</span>
-                <input
-                  type="text"
-                  value={(medical.medicalConditions ?? []).join(', ')}
-                  onChange={(e) => setMedicalCondition(e.target.value)}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none transition"
-                  placeholder="Separadas por coma"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">EPS</span>
-                <input
-                  type="text"
-                  value={medical.eps ?? ''}
-                  onChange={(e) => setMedical((m) => ({ ...m, eps: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none transition"
-                  placeholder="Entidad promotora de salud"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">ARL</span>
-                <input
-                  type="text"
-                  value={medical.arl ?? ''}
-                  onChange={(e) => setMedical((m) => ({ ...m, arl: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none transition"
-                  placeholder="Administradora de riesgos laborales"
-                />
-              </label>
-            </div>
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-2 text-gray-700 mb-3">
-                <Phone className="w-5 h-5 text-[#FF8C00]" />
-                <span className="font-bold">Contacto de emergencia</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-xl bg-gray-50/80 border border-gray-100">
-                <input
-                  placeholder="Nombre"
-                  value={medical.emergencyContact?.name ?? ''}
-                  onChange={(e) => setMedical((m) => ({
-                    ...m,
-                    emergencyContact: { ...m.emergencyContact!, name: e.target.value },
-                  }))}
-                  className="px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none"
-                />
-                <input
-                  placeholder="Teléfono"
-                  value={medical.emergencyContact?.phone ?? ''}
-                  onChange={(e) => setMedical((m) => ({
-                    ...m,
-                    emergencyContact: { ...m.emergencyContact!, phone: e.target.value },
-                  }))}
-                  className="px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none"
-                />
-                <input
-                  placeholder="Parentesco / Relación"
-                  value={medical.emergencyContact?.relation ?? ''}
-                  onChange={(e) => setMedical((m) => ({
-                    ...m,
-                    emergencyContact: { ...m.emergencyContact!, relation: e.target.value },
-                  }))}
-                  className="px-3 py-2.5 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none"
-                />
-              </div>
-            </div>
-          </div>
-        )}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">EPS (Salud)</label>
+                    <input
+                      type="text"
+                      value={profile.medical_data?.eps || ''}
+                      onChange={(e) => updateMedicalData('eps', e.target.value)}
+                      placeholder="Nombre de la EPS"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    />
+                  </div>
 
-        {/* Dotación */}
-        {activeTab === 'sizes' && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 text-gray-700 mb-4">
-              <Shirt className="w-5 h-5 text-[#FF8C00]" />
-              <h2 className="text-lg font-bold">Tallas de dotación</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">Camisa</span>
-                <select
-                  value={sizes.shirt ?? ''}
-                  onChange={(e) => setSizes((s) => ({ ...s, shirt: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 focus:border-[#FF8C00] outline-none transition"
-                >
-                  <option value="">Seleccionar</option>
-                  {SHIRT_SIZES.map((x) => (
-                    <option key={x} value={x}>{x}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">Pantalón</span>
-                <select
-                  value={sizes.pants ?? ''}
-                  onChange={(e) => setSizes((s) => ({ ...s, pants: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 focus:border-[#FF8C00] outline-none transition"
-                >
-                  <option value="">Seleccionar</option>
-                  {PANTS_SIZES.map((x) => (
-                    <option key={x} value={x}>{x}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">Calzado</span>
-                <select
-                  value={sizes.shoes ?? ''}
-                  onChange={(e) => setSizes((s) => ({ ...s, shoes: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 focus:border-[#FF8C00] outline-none transition"
-                >
-                  <option value="">Seleccionar</option>
-                  {SHOE_SIZES.map((x) => (
-                    <option key={x} value={x}>{x}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-600">Guantes</span>
-                <select
-                  value={sizes.gloves ?? ''}
-                  onChange={(e) => setSizes((s) => ({ ...s, gloves: e.target.value }))}
-                  className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 focus:border-[#FF8C00] outline-none transition"
-                >
-                  <option value="">Seleccionar</option>
-                  {GLOVE_SIZES.map((x) => (
-                    <option key={x} value={x}>{x}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </div>
-        )}
-      </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Fondo de Pensiones</label>
+                    <input
+                      type="text"
+                      value={profile.medical_data?.pension || ''}
+                      onChange={(e) => updateMedicalData('pension', e.target.value)}
+                      placeholder="Nombre del fondo de pensiones"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    />
+                  </div>
 
-      {/* Save button */}
-      <div className="mt-8 flex justify-end">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 bg-[#FF8C00] text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-[#FF8C00]/25 hover:shadow-xl hover:shadow-[#FF8C00]/30 hover:bg-[#e67d00] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          <Save className="w-5 h-5" />
-          {saving ? 'Guardando…' : 'Guardar Información'}
-        </button>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">ARL (Riesgos Laborales)</label>
+                    <input
+                      type="text"
+                      value={profile.medical_data?.arl || ''}
+                      onChange={(e) => updateMedicalData('arl', e.target.value)}
+                      placeholder="Nombre de la ARL"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tipo de Sangre</label>
+                    <select
+                      value={profile.medical_data?.blood_type || ''}
+                      onChange={(e) => updateMedicalData('blood_type', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    >
+                      <option value="">Seleccionar...</option>
+                      {BLOOD_TYPES.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Alergias / Condiciones Médicas</label>
+                    <textarea
+                      value={profile.medical_data?.allergies || ''}
+                      onChange={(e) => updateMedicalData('allergies', e.target.value)}
+                      placeholder="Describe cualquier alergia o condición médica importante"
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sizes Tab */}
+            {activeTab === 'sizes' && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-cyan-100 dark:bg-cyan-900 rounded-lg">
+                    <Shirt className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tallas de Dotación</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Información para solicitud de uniformes y equipos</p>
+                  </div>
+                </div>
+
+                <div className="bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800 rounded-xl p-4 mb-6">
+                  <p className="text-sm text-cyan-900 dark:text-cyan-200">
+                    Asegúrate de elegir las tallas correctas para que los uniformes se adapten bien.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Talla Camisa/Blusa</label>
+                    <select
+                      value={profile.sizes_data?.shirt || 'M'}
+                      onChange={(e) => updateSizesData('shirt', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    >
+                      {SHIRT_SIZES.map((size) => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Talla Pantalón</label>
+                    <select
+                      value={profile.sizes_data?.pants || '32'}
+                      onChange={(e) => updateSizesData('pants', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    >
+                      {PANTS_SIZES.map((size) => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Talla Calzado</label>
+                    <select
+                      value={profile.sizes_data?.shoes || '40'}
+                      onChange={(e) => updateSizesData('shoes', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    >
+                      {SHOE_SIZES.map((size) => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

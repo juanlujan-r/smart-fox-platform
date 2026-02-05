@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Users, DollarSign, TrendingUp, AlertCircle, 
-  Calendar, CheckCircle, XCircle, Download 
+  Users, AlertCircle, 
+  Calendar, CheckCircle
 } from 'lucide-react';
 // import * as XLSX from 'xlsx'; // Descomentar cuando instales xlsx
 
@@ -25,8 +25,7 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
   const [stats, setStats] = useState({
     totalEmployees: 0,
     activeNow: 0,
-    pendingRequests: 0,
-    monthlyPayroll: 0
+    pendingRequests: 0
   });
   const [requests, setRequests] = useState<RequestType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,8 +59,7 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
       setStats({
         totalEmployees: empCount || 0,
         activeNow: activeCount || 0,
-        pendingRequests: reqCount || 0,
-        monthlyPayroll: (empCount || 0) * 1500000 // Estimado ejemplo
+        pendingRequests: reqCount || 0
       });
       
       if (reqs) setRequests(reqs);
@@ -76,7 +74,7 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
   return (
     <div className="space-y-6">
       {/* KPI CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
           <div className="flex justify-between items-start">
             <div>
@@ -100,23 +98,6 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
             </div>
           </div>
         </div>
-        
-        {/* Solo Gerentes ven Dinero */}
-        {userRole === 'gerente' && (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-bold">Nómina Est.</p>
-                <h3 className="text-2xl font-black text-gray-800 dark:text-white mt-2">
-                  ${(stats.monthlyPayroll / 1000000).toFixed(1)}M
-                </h3>
-              </div>
-              <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
-                <DollarSign className="w-5 h-5" />
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
           <div className="flex justify-between items-start">
@@ -132,7 +113,7 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
       </div>
 
       {/* SECCIÓN INFERIOR */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div>
         {/* LISTA DE SOLICITUDES */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
           <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
@@ -157,15 +138,6 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
             )}
           </div>
         </div>
-        
-        {/* Placeholder para Gráfica de Ventas (Solo Gerentes) */}
-        {userRole === 'gerente' && (
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 flex flex-col justify-center items-center text-center">
-                <TrendingUp className="w-12 h-12 text-gray-200 mb-2" />
-                <h3 className="text-lg font-bold text-gray-400">Rendimiento Financiero</h3>
-                <p className="text-xs text-gray-400">Gráficas disponibles próximamente</p>
-            </div>
-        )}
       </div>
     </div>
   );

@@ -21,7 +21,10 @@ export default function ShiftControl() {
   const fetchDailyLogs = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -83,12 +86,31 @@ export default function ShiftControl() {
 
   const handleStateChange = async (newState: string) => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('attendance_logs').insert([{ user_id: user.id, state: newState }]);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        alert('Usuario no autenticado. Por favor, inicia sesión nuevamente.');
+        return;
+      }
+
+      // Insert new attendance log
+      const { error } = await supabase.from('attendance_logs').insert([
+        { user_id: user.id, state: newState }
+      ]);
+
+      if (error) {
+        throw error;
+      }
+
+      // Refresh daily logs on success
       await fetchDailyLogs();
+    } catch (error: any) {
+      console.error("Error marcando turno:", error);
+      alert(`Error al guardar estado: ${error.message || 'Intente nuevamente'}`);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

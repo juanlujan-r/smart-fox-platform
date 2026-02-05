@@ -157,7 +157,7 @@ export default function Dashboard() {
           const todayDate = new Date().toISOString().split('T')[0];
           const { data: schedule, error: scheduleError } = await supabase
             .from('schedules')
-            .select('start_time, end_time')
+            .select('*')
             .eq('user_id', user.id)
             .eq('scheduled_date', todayDate)
             .single();
@@ -165,13 +165,23 @@ export default function Dashboard() {
           if (scheduleError) {
             console.error('Schedule fetch error:', JSON.stringify(scheduleError, null, 2));
           } else if (schedule) {
-            setScheduledStart(schedule.start_time);
-            setScheduledEnd(schedule.end_time);
-            const [sH, sM = '0'] = schedule.start_time.split(':');
-            const [eH, eM = '0'] = schedule.end_time.split(':');
-            const startMinutes = Number(sH) * 60 + Number(sM);
-            const endMinutes = Number(eH) * 60 + Number(eM);
-            setScheduledMinutes(Math.max(0, endMinutes - startMinutes));
+            const startTime = (schedule as { start_time?: string; start_at?: string }).start_time
+              ?? (schedule as { start_time?: string; start_at?: string }).start_at
+              ?? null;
+            const endTime = (schedule as { end_time?: string; end_at?: string }).end_time
+              ?? (schedule as { end_time?: string; end_at?: string }).end_at
+              ?? null;
+
+            setScheduledStart(startTime);
+            setScheduledEnd(endTime);
+
+            if (startTime && endTime) {
+              const [sH, sM = '0'] = startTime.split(':');
+              const [eH, eM = '0'] = endTime.split(':');
+              const startMinutes = Number(sH) * 60 + Number(sM);
+              const endMinutes = Number(eH) * 60 + Number(eM);
+              setScheduledMinutes(Math.max(0, endMinutes - startMinutes));
+            }
           }
         }
 

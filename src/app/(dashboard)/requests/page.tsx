@@ -40,7 +40,6 @@ export default function ReportarSolicitarPage() {
     end_date: format(new Date(), 'yyyy-MM-dd'),
   });
   const [file, setFile] = useState<File | null>(null);
-  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -65,25 +64,7 @@ export default function ReportarSolicitarPage() {
     const f = e.target.files?.[0];
     if (f) {
       setFile(f);
-      setUploadedPath(null);
     }
-  };
-
-  const uploadFile = async (): Promise<string | null> => {
-    if (!userId || !file) return null;
-    setUploading(true);
-    const ext = file.name.split('.').pop() || 'bin';
-    const path = `${userId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-    const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
-    });
-    setUploading(false);
-    if (error) {
-      pushToast('Error al subir el archivo: ' + error.message, 'error');
-      return null;
-    }
-    return path;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,13 +72,31 @@ export default function ReportarSolicitarPage() {
     if (!userId) return;
     setSubmitting(true);
 
-    let attachmentPath: string | null = uploadedPath ?? null;
-    if (file && !uploadedPath) {
-      attachmentPath = await uploadFile();
-      if (!attachmentPath) {
+    let fileUrl: string | null = null;
+
+    if (file) {
+      setUploading(true);
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+      const filePath = `${userId}/${Date.now()}_${cleanFileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(BUCKET)
+        .upload(filePath, file);
+
+      setUploading(false);
+
+      if (uploadError) {
+        console.error('Upload error details:', uploadError);
+        pushToast(`Error subiendo archivo: ${uploadError.message}`, 'error');
         setSubmitting(false);
         return;
       }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(BUCKET)
+        .getPublicUrl(filePath);
+
+      fileUrl = publicUrl;
     }
 
     const { error } = await supabase.from('hr_requests').insert([
@@ -107,7 +106,7 @@ export default function ReportarSolicitarPage() {
         details: form.details || null,
         start_date: form.start_date,
         end_date: form.end_date,
-        attachment_url: attachmentPath,
+        attachment_url: fileUrl,
         status: 'pendiente',
       },
     ]);
@@ -120,7 +119,6 @@ export default function ReportarSolicitarPage() {
     pushToast('Solicitud enviada correctamente', 'success');
     setForm({ type: 'permiso', details: '', start_date: form.start_date, end_date: form.end_date });
     setFile(null);
-    setUploadedPath(null);
 
     const { data } = await supabase
       .from('hr_requests')
