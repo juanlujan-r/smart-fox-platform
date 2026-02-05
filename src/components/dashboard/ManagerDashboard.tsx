@@ -194,8 +194,8 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
         </div>
       </div>
 
-      {/* PAYROLL SECTION - Admin Users Only */}
-      {(userRole === 'supervisor' || userRole === 'gerente') && (
+      {/* PAYROLL SECTION - Managers Only */}
+      {userRole === 'gerente' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700">
             <div className="flex justify-between items-start">

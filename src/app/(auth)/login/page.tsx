@@ -28,8 +28,11 @@ export default function LoginPage() {
     setError(null);
 
     try {
+      // Auto-complete email with @smartfox.com if not present
+      const fullEmail = email.includes('@') ? email : `${email}@smartfox.com`;
+      
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
+        email: fullEmail,
         password,
       });
 
@@ -77,16 +80,19 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Email Corporativo</label>
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Usuario (Correo Corporativo)</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium pointer-events-none">
+                @smartfox.com
+              </div>
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF8C00] focus:bg-white transition-all text-gray-800"
-                placeholder="usuario@smartfox.com"
+                onChange={(e) => setEmail(e.target.value.split('@')[0])}
+                className="w-full pl-12 pr-32 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF8C00] focus:bg-white transition-all text-gray-800"
+                placeholder="usuario"
               />
             </div>
           </div>
