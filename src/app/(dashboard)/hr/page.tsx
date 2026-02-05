@@ -32,11 +32,11 @@ export default function RRHHPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto py-8">
       <header className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Gestión de Talento</h1>
-          <p className="text-gray-500">Control de nómina y equipo Smart Fox.</p>
+          <h1 className="text-4xl font-black text-gray-900">Gestión de Talento</h1>
+          <p className="text-gray-600 mt-2">Control de nómina y equipo Smart Fox.</p>
         </div>
         <button 
           onClick={addEmployee}

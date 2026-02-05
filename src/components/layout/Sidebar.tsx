@@ -2,8 +2,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Box, Calendar, FileText, UserCircle, Users, BarChart3, LayoutDashboard, LogOut } from 'lucide-react';
+import { Calendar, FileText, UserCircle, Users, BarChart3, LayoutDashboard, LogOut, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Sidebar() {
   const [userRole, setUserRole] = useState('empleado');
@@ -39,20 +40,22 @@ export default function Sidebar() {
     { name: 'Mis Turnos', icon: Calendar, path: '/shifts', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Reportar/Solicitar', icon: FileText, path: '/requests', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Mi Información', icon: UserCircle, path: '/profile', roles: ['empleado', 'supervisor', 'gerente'] },
+    { name: 'Aprobar Solicitudes', icon: CheckCircle, path: '/approvals', roles: ['supervisor', 'gerente'] },
     { name: 'Gestión RRHH', icon: Users, path: '/hr-management', roles: ['supervisor', 'gerente'] },
     { name: 'Dashboard Gerencial', icon: BarChart3, path: '/admin', roles: ['gerente'] },
   ];
 
   return (
     <aside className="w-64 bg-[#1a202c] h-screen flex flex-col p-4 border-r border-gray-800 sticky top-0">
-      <div className="flex items-center gap-3 mb-10 px-2 pt-2">
-        <div className="bg-[#FF8C00] p-1.5 rounded-lg">
-          <Box className="text-white w-6 h-6" />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-white font-black leading-none text-lg">SMART FOX</span>
-          <span className="text-[#FF8C00] text-[9px] font-bold tracking-[0.2em]">ERP SOLUTIONS</span>
-        </div>
+      <div className="flex items-center justify-center mb-10 px-2 pt-2">
+        <Image 
+          src="/smartfox-logo.svg" 
+          alt="SmartFox ERP" 
+          width={200} 
+          height={100}
+          className="object-contain"
+          priority
+        />
       </div>
 
       <nav className="flex-1 space-y-1">

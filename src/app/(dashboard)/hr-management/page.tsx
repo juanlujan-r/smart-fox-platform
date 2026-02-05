@@ -368,10 +368,10 @@ export default function GestionEquipoPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 py-8">
       <header>
-        <h1 className="text-3xl font-bold text-gray-800">Gestión de Equipo</h1>
-        <p className="text-gray-500 mt-1">Estado en vivo, solicitudes pendientes y alertas de ausencia</p>
+        <h1 className="text-4xl font-black text-gray-900">Gestión de Equipo</h1>
+        <p className="text-gray-600 mt-2">Estado en vivo, solicitudes pendientes y alertas de ausencia</p>
       </header>
 
       <div className="flex flex-wrap gap-2">

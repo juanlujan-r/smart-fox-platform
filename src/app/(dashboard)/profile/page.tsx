@@ -14,7 +14,8 @@ import {
   MapPin,
   Building2,
   Briefcase,
-  Calendar
+  Calendar,
+  DollarSign
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 
@@ -96,6 +97,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
+  const [userEmail, setUserEmail] = useState('');
   const { pushToast } = useToast();
 
   const [profile, setProfile] = useState<Profile>({
@@ -145,6 +147,9 @@ export default function ProfilePage() {
         setLoading(false);
         return;
       }
+
+      // Save the user's email
+      setUserEmail(user.email || '');
 
       const { data, error } = await supabase
         .from('profiles')
@@ -283,12 +288,12 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto pb-20">
+    <div className="max-w-6xl mx-auto pb-20 px-6 py-8">
       {/* Header */}
       <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 dark:text-white">Mi Perfil</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Gestiona tu información personal y profesional</p>
+          <h1 className="text-4xl font-black text-gray-900">Mi Perfil</h1>
+          <p className="text-gray-600 mt-2">Gestiona tu información personal y profesional</p>
         </div>
         <button
           onClick={handleSave}
@@ -309,6 +314,7 @@ export default function ProfilePage() {
               { id: 'personal', label: 'Datos Personales', icon: User },
               { id: 'legal', label: 'Información Legal', icon: Briefcase },
               { id: 'medical', label: 'Información Médica', icon: Heart },
+              { id: 'banking', label: 'Datos Bancarios', icon: DollarSign },
               { id: 'sizes', label: 'Tallas de Dotación', icon: Shirt },
             ].map((tab) => (
               <button
@@ -350,9 +356,22 @@ export default function ProfilePage() {
                     </label>
                     <input
                       type="email"
+                      value={userEmail}
+                      disabled
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-400 cursor-not-allowed font-mono text-sm"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Este es tu correo de acceso (solo lectura)</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <Mail className="w-4 h-4" /> Correo Personal
+                    </label>
+                    <input
+                      type="email"
                       value={profile.personal_data?.email || ''}
                       onChange={(e) => updatePersonalData('email', e.target.value)}
-                      placeholder="usuario@smartfox.com"
+                      placeholder="correo.personal@example.com"
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
                     />
                   </div>
@@ -429,11 +448,11 @@ export default function ProfilePage() {
             )}
 
             {/* Bank Account Tab */}
-            {activeTab === 'personal' && (
-              <div className="space-y-6 mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+            {activeTab === 'banking' && (
+              <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                    <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Datos Bancarios</h2>

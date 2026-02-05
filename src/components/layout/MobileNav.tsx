@@ -31,7 +31,7 @@ export default function MobileNav() {
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 pb-safe">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1a202c] border-t border-gray-800 z-50 pb-safe">
       <div className="flex justify-around items-center h-16">
         {menuItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
@@ -51,7 +51,7 @@ export default function MobileNav() {
         <button
           type="button"
           onClick={handleLogout}
-          className="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400 hover:text-[#FF8C00]"
+          className="flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400 hover:text-red-400"
           aria-label="Cerrar sesión"
         >
           <LogOut className="w-6 h-6" />

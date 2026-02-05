@@ -9,7 +9,7 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthGuard>
-      <div className="flex h-screen w-full bg-[#f3f4f6]">
+      <div className="flex h-screen w-full bg-white">
         {/* Sidebar solo visible en Desktop */}
         <Sidebar />
 

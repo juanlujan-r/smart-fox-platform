@@ -212,7 +212,7 @@ export default function Dashboard() {
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500 mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg font-medium">Cargando dashboard...</p>
@@ -242,7 +242,7 @@ export default function Dashboard() {
   const showCompliance = latestState === 'entrada';
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <header className="mb-8">

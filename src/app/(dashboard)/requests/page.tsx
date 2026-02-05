@@ -75,12 +75,12 @@ export default function RequestsPage() {
 
   if (success) {
     return (
-      <div className="max-w-xl mx-auto mt-10 p-8 bg-white dark:bg-gray-800 rounded-2xl text-center shadow-lg border border-green-100">
+      <div className="max-w-xl mx-auto mt-10 p-8 bg-white rounded-2xl text-center shadow-lg border border-green-100 px-6 py-8">
         <div className="bg-green-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
           <CheckCircle className="w-10 h-10 text-green-600" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">¡Solicitud Enviada!</h2>
-        <p className="text-gray-500 mb-8">Tu solicitud ha sido radicada y notificada a tu supervisor.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Solicitud Enviada!</h2>
+        <p className="text-gray-600 mb-8">Tu solicitud ha sido radicada y notificada a tu supervisor.</p>
         <button onClick={() => setSuccess(false)} className="bg-gray-900 text-white px-6 py-2 rounded-lg font-bold">
           Nueva Solicitud
         </button>
@@ -89,10 +89,10 @@ export default function RequestsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-black text-gray-800 dark:text-white mb-6">Radicar Solicitud o Novedad</h1>
+    <div className="max-w-2xl mx-auto px-6 py-8">
+      <h1 className="text-4xl font-black text-gray-900 mb-6">Radicar Solicitud o Novedad</h1>
       
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
         
         {/* TIPO */}
         <div className="grid grid-cols-2 gap-3">
