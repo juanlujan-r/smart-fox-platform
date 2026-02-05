@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Users, Plus, UserPlus, Phone, Briefcase } from 'lucide-react';
+import ShiftControl from '@/components/hr/ShiftControl';
 
 export default function RRHHPage() {
   const [employees, setEmployees] = useState<any[]>([]);
@@ -46,6 +47,9 @@ export default function RRHHPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+          <ShiftControl />
+        </div>
         {loading ? <p>Cargando equipo...</p> : employees.map((emp) => (
           <div key={emp.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
             <div className="flex justify-between items-start">
