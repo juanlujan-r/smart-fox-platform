@@ -379,21 +379,21 @@ UPDATE public.profiles SET role = 'empleado' WHERE role IS NULL;
 -- Create test auth users with fixed UUIDs
 WITH test_users AS (
   SELECT * FROM (VALUES
-    ('00000000-0000-0000-0000-000000000001'::uuid, 'gerente1@smartfox.local', 'Carlos Rodríguez'),
-    ('00000000-0000-0000-0000-000000000002'::uuid, 'gerente2@smartfox.local', 'María González'),
-    ('00000000-0000-0000-0000-000000000003'::uuid, 'supervisor1@smartfox.local', 'Juan López'),
-    ('00000000-0000-0000-0000-000000000004'::uuid, 'supervisor2@smartfox.local', 'Patricia Sánchez'),
-    ('00000000-0000-0000-0000-000000000005'::uuid, 'supervisor3@smartfox.local', 'Roberto García'),
-    ('00000000-0000-0000-0000-000000000011'::uuid, 'emp1@smartfox.local', 'Ana Martínez'),
-    ('00000000-0000-0000-0000-000000000012'::uuid, 'emp2@smartfox.local', 'Diego Fernández'),
-    ('00000000-0000-0000-0000-000000000013'::uuid, 'emp3@smartfox.local', 'Laura Jiménez'),
-    ('00000000-0000-0000-0000-000000000014'::uuid, 'emp4@smartfox.local', 'Miguel Torres'),
-    ('00000000-0000-0000-0000-000000000015'::uuid, 'emp5@smartfox.local', 'Sofía Cruz'),
-    ('00000000-0000-0000-0000-000000000016'::uuid, 'emp6@smartfox.local', 'Fernando Reyes'),
-    ('00000000-0000-0000-0000-000000000017'::uuid, 'emp7@smartfox.local', 'Gabriela Mendoza'),
-    ('00000000-0000-0000-0000-000000000018'::uuid, 'emp8@smartfox.local', 'Julio Herrera'),
-    ('00000000-0000-0000-0000-000000000019'::uuid, 'emp9@smartfox.local', 'Valentina Salazar'),
-    ('00000000-0000-0000-0000-000000000020'::uuid, 'emp10@smartfox.local', 'Andrés Moreno')
+    ('00000000-0000-0000-0000-000000000001'::uuid, 'gerente1@smartfox.com', 'Carlos Rodríguez'),
+    ('00000000-0000-0000-0000-000000000002'::uuid, 'gerente2@smartfox.com', 'María González'),
+    ('00000000-0000-0000-0000-000000000003'::uuid, 'supervisor1@smartfox.com', 'Juan López'),
+    ('00000000-0000-0000-0000-000000000004'::uuid, 'supervisor2@smartfox.com', 'Patricia Sánchez'),
+    ('00000000-0000-0000-0000-000000000005'::uuid, 'supervisor3@smartfox.com', 'Roberto García'),
+    ('00000000-0000-0000-0000-000000000011'::uuid, 'emp1@smartfox.com', 'Ana Martínez'),
+    ('00000000-0000-0000-0000-000000000012'::uuid, 'emp2@smartfox.com', 'Diego Fernández'),
+    ('00000000-0000-0000-0000-000000000013'::uuid, 'emp3@smartfox.com', 'Laura Jiménez'),
+    ('00000000-0000-0000-0000-000000000014'::uuid, 'emp4@smartfox.com', 'Miguel Torres'),
+    ('00000000-0000-0000-0000-000000000015'::uuid, 'emp5@smartfox.com', 'Sofía Cruz'),
+    ('00000000-0000-0000-0000-000000000016'::uuid, 'emp6@smartfox.com', 'Fernando Reyes'),
+    ('00000000-0000-0000-0000-000000000017'::uuid, 'emp7@smartfox.com', 'Gabriela Mendoza'),
+    ('00000000-0000-0000-0000-000000000018'::uuid, 'emp8@smartfox.com', 'Julio Herrera'),
+    ('00000000-0000-0000-0000-000000000019'::uuid, 'emp9@smartfox.com', 'Valentina Salazar'),
+    ('00000000-0000-0000-0000-000000000020'::uuid, 'emp10@smartfox.com', 'Andrés Moreno')
   ) AS t(id, email, full_name)
 )
 INSERT INTO auth.users (
@@ -430,25 +430,25 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.profiles (id, full_name, role, base_salary, minute_rate, document_id, personal_data)
 VALUES 
   -- Gerentes (2)
-  ('00000000-0000-0000-0000-000000000001', 'Carlos Rodríguez', 'gerente', 5000000, 396.83, '1001001', '{"email": "gerente1@smartfox.local", "phone": "3001234567"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000002', 'María González', 'gerente', 4800000, 380.95, '1001002', '{"email": "gerente2@smartfox.local", "phone": "3001234568"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000001', 'Carlos Rodríguez', 'gerente', 5000000, 396.83, '1001001', '{"email": "gerente1@smartfox.com", "phone": "3001234567"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000002', 'María González', 'gerente', 4800000, 380.95, '1001002', '{"email": "gerente2@smartfox.com", "phone": "3001234568"}'::jsonb),
   
   -- Supervisores (3)
-  ('00000000-0000-0000-0000-000000000003', 'Juan López', 'supervisor', 2500000, 198.41, '1002001', '{"email": "supervisor1@smartfox.local", "phone": "3001234569"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000004', 'Patricia Sánchez', 'supervisor', 2500000, 198.41, '1002002', '{"email": "supervisor2@smartfox.local", "phone": "3001234570"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000005', 'Roberto García', 'supervisor', 2400000, 190.48, '1002003', '{"email": "supervisor3@smartfox.local", "phone": "3001234571"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000003', 'Juan López', 'supervisor', 2500000, 198.41, '1002001', '{"email": "supervisor1@smartfox.com", "phone": "3001234569"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000004', 'Patricia Sánchez', 'supervisor', 2500000, 198.41, '1002002', '{"email": "supervisor2@smartfox.com", "phone": "3001234570"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000005', 'Roberto García', 'supervisor', 2400000, 190.48, '1002003', '{"email": "supervisor3@smartfox.com", "phone": "3001234571"}'::jsonb),
   
   -- Empleados (10)
-  ('00000000-0000-0000-0000-000000000011', 'Ana Martínez', 'empleado', 1200000, 95.24, '1100001', '{"email": "emp1@smartfox.local", "phone": "3001234572"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000012', 'Diego Fernández', 'empleado', 1200000, 95.24, '1100002', '{"email": "emp2@smartfox.local", "phone": "3001234573"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000013', 'Laura Jiménez', 'empleado', 1250000, 99.21, '1100003', '{"email": "emp3@smartfox.local", "phone": "3001234574"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000014', 'Miguel Torres', 'empleado', 1200000, 95.24, '1100004', '{"email": "emp4@smartfox.local", "phone": "3001234575"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000015', 'Sofía Cruz', 'empleado', 1300000, 103.17, '1100005', '{"email": "emp5@smartfox.local", "phone": "3001234576"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000016', 'Fernando Reyes', 'empleado', 1200000, 95.24, '1100006', '{"email": "emp6@smartfox.local", "phone": "3001234577"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000017', 'Gabriela Mendoza', 'empleado', 1250000, 99.21, '1100007', '{"email": "emp7@smartfox.local", "phone": "3001234578"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000018', 'Julio Herrera', 'empleado', 1200000, 95.24, '1100008', '{"email": "emp8@smartfox.local", "phone": "3001234579"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000019', 'Valentina Salazar', 'empleado', 1300000, 103.17, '1100009', '{"email": "emp9@smartfox.local", "phone": "3001234580"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000020', 'Andrés Moreno', 'empleado', 1200000, 95.24, '1100010', '{"email": "emp10@smartfox.local", "phone": "3001234581"}'::jsonb)
+  ('00000000-0000-0000-0000-000000000011', 'Ana Martínez', 'empleado', 1200000, 95.24, '1100001', '{"email": "emp1@smartfox.com", "phone": "3001234572"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000012', 'Diego Fernández', 'empleado', 1200000, 95.24, '1100002', '{"email": "emp2@smartfox.com", "phone": "3001234573"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000013', 'Laura Jiménez', 'empleado', 1250000, 99.21, '1100003', '{"email": "emp3@smartfox.com", "phone": "3001234574"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000014', 'Miguel Torres', 'empleado', 1200000, 95.24, '1100004', '{"email": "emp4@smartfox.com", "phone": "3001234575"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000015', 'Sofía Cruz', 'empleado', 1300000, 103.17, '1100005', '{"email": "emp5@smartfox.com", "phone": "3001234576"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000016', 'Fernando Reyes', 'empleado', 1200000, 95.24, '1100006', '{"email": "emp6@smartfox.com", "phone": "3001234577"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000017', 'Gabriela Mendoza', 'empleado', 1250000, 99.21, '1100007', '{"email": "emp7@smartfox.com", "phone": "3001234578"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000018', 'Julio Herrera', 'empleado', 1200000, 95.24, '1100008', '{"email": "emp8@smartfox.com", "phone": "3001234579"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000019', 'Valentina Salazar', 'empleado', 1300000, 103.17, '1100009', '{"email": "emp9@smartfox.com", "phone": "3001234580"}'::jsonb),
+  ('00000000-0000-0000-0000-000000000020', 'Andrés Moreno', 'empleado', 1200000, 95.24, '1100010', '{"email": "emp10@smartfox.com", "phone": "3001234581"}'::jsonb)
 ON CONFLICT (id) DO UPDATE SET
   full_name = EXCLUDED.full_name,
   role = EXCLUDED.role,
