@@ -349,35 +349,36 @@ export default function MisTurnosPage() {
         </section>
       )}
 
-      {/* Calendar View + Shift Exchange button */}
-      <section className="fox-card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-2 text-gray-800">
-            <Calendar className="w-5 h-5 text-[#FF8C00]" />
-            <h2 className="text-lg font-bold">Vista Semanal</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePrevWeek}
-              className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="text-sm font-semibold text-gray-700 min-w-[180px] text-center">
-              {format(weekDays[0], 'd MMM', { locale: es })} – {format(weekDays[6], 'd MMM yyyy', { locale: es })}
-            </span>
-            <button
-              type="button"
-              onClick={handleNextWeek}
-              className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowExchangeModal(true)}
-              className="ml-4 flex items-center gap-2 bg-[#FF8C00] text-white px-4 py-2.5 rounded-2xl font-bold shadow-md shadow-[#FF8C00]/25 hover:bg-[#e67d00] transition-all"
+      {/* Calendar View + Shift Exchange button (EMPLOYEES ONLY) */}
+      {userRole === 'empleado' || !userRole ? (
+        <section className="fox-card p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-2 text-gray-800">
+              <Calendar className="w-5 h-5 text-[#FF8C00]" />
+              <h2 className="text-lg font-bold">Vista Semanal</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePrevWeek}
+                className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="text-sm font-semibold text-gray-700 min-w-[180px] text-center">
+                {format(weekDays[0], 'd MMM', { locale: es })} – {format(weekDays[6], 'd MMM yyyy', { locale: es })}
+              </span>
+              <button
+                type="button"
+                onClick={handleNextWeek}
+                className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowExchangeModal(true)}
+                className="ml-4 flex items-center gap-2 bg-[#FF8C00] text-white px-4 py-2.5 rounded-2xl font-bold shadow-md shadow-[#FF8C00]/25 hover:bg-[#e67d00] transition-all"
             >
               <ArrowLeftRight className="w-4 h-4" />
               Solicitar Cambio de Turno
@@ -416,8 +417,10 @@ export default function MisTurnosPage() {
           })}
         </div>
       </section>
+    ) : null}
 
-      {/* Check-in vs Schedule (late highlight) */}
+      {/* Check-in vs Schedule (late highlight) - EMPLOYEES ONLY */}
+      {userRole === 'empleado' || !userRole ? (
       <section className="fox-card p-6">
         <div className="flex items-center gap-2 text-gray-800 mb-4">
           <LogIn className="w-5 h-5 text-[#FF8C00]" />
@@ -457,9 +460,10 @@ export default function MisTurnosPage() {
           )}
         </div>
       </section>
+      ) : null}
 
-      {/* Shift Exchange Modal */}
-      {showExchangeModal && (
+      {/* Shift Exchange Modal - EMPLOYEES ONLY */}
+      {(userRole === 'empleado' || !userRole) && showExchangeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="fox-card max-w-md w-full p-6 shadow-xl">
             <div className="flex justify-between items-center mb-4">
@@ -535,7 +539,7 @@ export default function MisTurnosPage() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
