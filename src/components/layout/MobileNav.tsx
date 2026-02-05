@@ -17,12 +17,17 @@ export default function MobileNav() {
   ];
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error during logout:', error.message);
-      return;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error during logout:', error);
+        return;
+      }
+      // Force a full page redirect to clear all state
+      window.location.href = '/login';
+    } catch (err) {
+      console.error('Logout failed:', err);
     }
-    router.push('/login');
   };
 
   return (

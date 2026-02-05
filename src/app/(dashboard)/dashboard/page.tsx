@@ -297,11 +297,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Shift Performance Card */}
+          {/* Rendimiento de Turnos Card */}
           <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Shift Performance</p>
+                <p className="text-sm font-medium text-gray-600">Rendimiento de Turnos</p>
                 <p className="text-4xl font-bold text-gray-900 mt-2">
                   {compliancePercent}%
                 </p>
@@ -323,11 +323,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Current Status Timer */}
+        {/* Temporizador de Estado Actual */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg shadow-lg p-6 text-white">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-widest text-orange-300 font-bold">Current Status Timer</p>
+              <p className="text-xs uppercase tracking-widest text-orange-300 font-bold">Temporizador de Estado Actual</p>
               <h3 className="text-2xl font-bold mt-2">
                 {stateLabels[latestState] || 'Estado desconocido'}
               </h3>
@@ -341,25 +341,25 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Login Stats (only if in 'entrada') */}
+        {/* Estadísticas de Acceso (only if in 'entrada') */}
         {showCompliance && (
           <div className="bg-white rounded-lg shadow-lg p-6 border border-orange-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Login Stats</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Estadísticas de Acceso</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Cumulative Work</p>
+                <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Trabajo Acumulado</p>
                 <p className="text-2xl font-bold text-gray-900 mt-2">
                   {Math.floor(actualWorkMinutes / 60)}h {String(actualWorkMinutes % 60).padStart(2, '0')}m
                 </p>
               </div>
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Scheduled Time</p>
+                <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Horario Programado</p>
                 <p className="text-2xl font-bold text-gray-900 mt-2">
                   {scheduledStart || '--:--'} - {scheduledEnd || '--:--'}
                 </p>
               </div>
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Compliance</p>
+                <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Cumplimiento</p>
                 <div className="flex items-center gap-3 mt-2">
                   <div className="relative w-14 h-14">
                     <svg className="w-14 h-14 transform -rotate-90">

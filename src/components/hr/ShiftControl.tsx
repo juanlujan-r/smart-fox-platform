@@ -95,8 +95,10 @@ export default function ShiftControl() {
   };
 
   const handleStateChange = async (newState: string) => {
-    setLoading(true);
     try {
+      setLoading(true);
+      
+      // Get authenticated user
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError) {
@@ -105,14 +107,22 @@ export default function ShiftControl() {
         return;
       }
       
-      if (!user) {
-        alert("Error: No se encontró usuario autenticado.");
+      if (!user || !user.id) {
+        console.error('No user ID found');
+        alert('Error: No se encontró usuario autenticado.');
         return;
       }
 
-      const { error: insertError } = await supabase.from('attendance_logs').insert([
-        { user_id: user.id, state: newState }
-      ]);
+      console.log('Inserting attendance log for user:', user.id, 'state:', newState);
+
+      // Insert attendance log with authenticated user_id
+      const { data: insertedData, error: insertError } = await supabase
+        .from('attendance_logs')
+        .insert([{ 
+          user_id: user.id, 
+          state: newState 
+        }])
+        .select();
 
       if (insertError) {
         console.error('Error al insertar log:', insertError);
@@ -120,9 +130,12 @@ export default function ShiftControl() {
         return;
       }
 
-      await fetchDailyLogs(); // Recarga inmediata tras éxito
+      console.log('Attendance log inserted successfully:', insertedData);
+
+      // Reload logs after successful insert
+      await fetchDailyLogs();
     } catch (error: any) {
-      console.error("Error al marcar turno:", error);
+      console.error('Error al marcar turno:', error);
       alert(`Error al guardar: ${error.message || error.details || 'Intente de nuevo'}`);
     } finally {
       setLoading(false);

@@ -21,9 +21,17 @@ export default function Sidebar() {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error during logout:', error);
+        return;
+      }
+      // Clear any client-side storage
+      window.location.href = '/login';
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
   };
 
   const menu = [

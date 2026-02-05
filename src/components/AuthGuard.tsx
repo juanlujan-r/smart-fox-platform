@@ -42,7 +42,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       async (event, session) => {
         if (event === 'SIGNED_OUT' || !session) {
           setAuthenticated(false);
-          router.push('/login');
+          // Use window.location for hard redirect on logout
+          window.location.href = '/login';
         } else if (event === 'SIGNED_IN' && session) {
           setAuthenticated(true);
         }

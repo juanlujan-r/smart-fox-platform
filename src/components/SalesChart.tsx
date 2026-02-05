@@ -74,7 +74,7 @@ export default function SalesChart() {
           <XAxis dataKey="date" />
           <YAxis />
           <Tooltip
-            formatter={(value: number | undefined) => [value ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value) : '$0', 'Sales']}
+            formatter={(value: number | undefined) => [value ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(value) : '$0', 'Ventas']}
           />
           <Area
             type="monotone"
