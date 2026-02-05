@@ -8,6 +8,9 @@ import { es } from 'date-fns/locale';
 import {
   Users,
   Clock,
+  Coffee,
+  Utensils,
+  Power,
   CheckCircle,
   XCircle,
   FileText,
@@ -17,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { AttendanceLogRow, HrRequestRow, ScheduleRow } from '@/types/database';
 import type { PersonalData } from '@/types/database';
+import ScheduleManager from '../hr/ScheduleManager';
 
 const BUCKET = 'hr-attachments';
 
@@ -64,6 +68,14 @@ function formatTimeSince(dateStr: string): string {
   return `Hace ${diffDays} d`;
 }
 
+function getStateIcon(state: string) {
+  if (state === 'entrada') return Clock;
+  if (state === 'descanso') return Coffee;
+  if (state === 'almuerzo') return Utensils;
+  if (state === 'reunion') return Users;
+  return Power;
+}
+
 export default function GestionEquipoPage() {
   const { pushToast } = useToast();
   const [profiles, setProfiles] = useState<ProfileWithRole[]>([]);
@@ -73,12 +85,37 @@ export default function GestionEquipoPage() {
   const [entradaLogsToday, setEntradaLogsToday] = useState<{ user_id: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [nowTs, setNowTs] = useState(Date.now());
+  const [activeTab, setActiveTab] = useState<'equipo' | 'horarios'>('equipo');
+
+  const loadAttendance = async () => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayStart = `${today}T00:00:00`;
+    const todayEnd = `${today}T23:59:59`;
+
+    const [logsRes, logsTodayRes] = await Promise.all([
+      supabase.from('attendance_logs').select('*').order('created_at', { ascending: false }),
+      supabase
+        .from('attendance_logs')
+        .select('user_id, created_at, state, type')
+        .gte('created_at', todayStart)
+        .lte('created_at', todayEnd),
+    ]);
+
+    if (logsRes.data) setLogs(logsRes.data as AttendanceLogRow[]);
+
+    const todayLogs = (logsTodayRes.data ?? []) as AttendanceLogRow[];
+    const todayEntradaUserIds = new Set<string>();
+    todayLogs.forEach((l) => {
+      const state = (l as { state?: string }).state ?? (l as { type?: string }).type;
+      if (state === 'entrada') todayEntradaUserIds.add(l.user_id);
+    });
+    setEntradaLogsToday(Array.from(todayEntradaUserIds).map((user_id) => ({ user_id })));
+  };
 
   useEffect(() => {
     const load = async () => {
       const today = format(new Date(), 'yyyy-MM-dd');
-      const todayStart = `${today}T00:00:00`;
-      const todayEnd = `${today}T23:59:59`;
 
       const [profilesRes, logsRes, requestsRes, schedulesRes, logsTodayRes] = await Promise.all([
         supabase.from('profiles').select('id, role, personal_data').order('id'),
@@ -98,8 +135,8 @@ export default function GestionEquipoPage() {
         supabase
           .from('attendance_logs')
           .select('user_id, created_at, state, type')
-          .gte('created_at', todayStart)
-          .lte('created_at', todayEnd),
+          .gte('created_at', `${today}T00:00:00`)
+          .lte('created_at', `${today}T23:59:59`),
       ]);
 
       if (profilesRes.data) setProfiles(profilesRes.data as ProfileWithRole[]);
@@ -117,6 +154,28 @@ export default function GestionEquipoPage() {
       setLoading(false);
     };
     load();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('attendance-live')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'attendance_logs' },
+        () => {
+          loadAttendance();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const latestByUser = useMemo(() => {
@@ -148,6 +207,24 @@ export default function GestionEquipoPage() {
       };
     });
   }, [profiles, latestByUser]);
+
+  const teamSummary = useMemo(() => {
+    let enTurno = 0;
+    let enDescanso = 0;
+    let ausentes = 0;
+    liveCards.forEach(({ state }) => {
+      if (state === 'entrada') enTurno += 1;
+      else if (state === 'descanso' || state === 'almuerzo') enDescanso += 1;
+      else if (state === 'offline' || state === 'salida') ausentes += 1;
+    });
+    return { enTurno, enDescanso, ausentes };
+  }, [liveCards]);
+
+  const getElapsedMs = (dateStr?: string) => {
+    if (!dateStr) return 0;
+    const start = parseISO(dateStr).getTime();
+    return Math.max(0, nowTs - start);
+  };
 
   const absenceAlertList = useMemo(() => {
     const now = new Date();
@@ -223,11 +300,57 @@ export default function GestionEquipoPage() {
         <p className="text-gray-500 mt-1">Estado en vivo, solicitudes pendientes y alertas de ausencia</p>
       </header>
 
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('equipo')}
+          className={`px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${
+            activeTab === 'equipo'
+              ? 'bg-[#FF8C00] text-white border-[#FF8C00]'
+              : 'bg-white text-gray-700 border-gray-200 hover:border-[#FF8C00]/50'
+          }`}
+        >
+          Gestión de Equipo
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('horarios')}
+          className={`px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${
+            activeTab === 'horarios'
+              ? 'bg-[#FF8C00] text-white border-[#FF8C00]'
+              : 'bg-white text-gray-700 border-gray-200 hover:border-[#FF8C00]/50'
+          }`}
+        >
+          Gestión de Horarios
+        </button>
+      </div>
+
+      {activeTab === 'horarios' && (
+        <ScheduleManager />
+      )}
+
+      {activeTab === 'equipo' && (
+      <>
+
       {/* Live Status Board */}
       <section className="fox-card p-6">
         <div className="flex items-center gap-2 text-gray-800 mb-4">
           <Users className="w-5 h-5 text-[#FF8C00]" />
           <h2 className="text-lg font-bold">Estado en vivo</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          <div className="rounded-xl bg-green-50 border border-green-100 p-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-green-700">En Turno</p>
+            <p className="text-2xl font-black text-green-800 mt-1">{teamSummary.enTurno}</p>
+          </div>
+          <div className="rounded-xl bg-amber-50 border border-amber-100 p-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-amber-700">En Descanso</p>
+            <p className="text-2xl font-black text-amber-800 mt-1">{teamSummary.enDescanso}</p>
+          </div>
+          <div className="rounded-xl bg-gray-50 border border-gray-100 p-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-600">Ausentes</p>
+            <p className="text-2xl font-black text-gray-800 mt-1">{teamSummary.ausentes}</p>
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {liveCards.map(({ profile, lastLog, state, config, name }) => (
@@ -235,17 +358,44 @@ export default function GestionEquipoPage() {
               key={profile.id}
               className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4 flex items-center gap-4 shadow-sm"
             >
-              <div className={`w-3 h-3 rounded-full shrink-0 ${config.bg}`} title={config.label} />
+              <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${config.bg}`} title={config.label}>
+                {(() => {
+                  const Icon = getStateIcon(state);
+                  return <Icon className="w-5 h-5 text-white" />;
+                })()}
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-gray-800 truncate">{name}</p>
                 <p className={`text-xs font-medium uppercase tracking-wide ${config.color}`}>
                   {config.label}
                 </p>
                 {lastLog && (
-                  <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatTimeSince(lastLog.created_at)}
-                  </p>
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatTimeSince(lastLog.created_at)}
+                    </p>
+                    {(state === 'descanso' || state === 'almuerzo') && (
+                      (() => {
+                        const elapsedMs = getElapsedMs(lastLog.created_at);
+                        const elapsedMin = Math.floor(elapsedMs / 60000);
+                        const elapsedSec = Math.floor((elapsedMs % 60000) / 1000);
+                        const isOverLimit = elapsedMin >= 20;
+                        return (
+                          <div
+                            className={`mt-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold tracking-widest ${
+                              isOverLimit
+                                ? 'bg-red-100 text-red-700 animate-pulse'
+                                : 'bg-orange-100 text-orange-700'
+                            }`}
+                          >
+                            <span>⏱</span>
+                            {String(elapsedMin).padStart(2, '0')}:{String(elapsedSec).padStart(2, '0')}
+                          </div>
+                        );
+                      })()
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -351,6 +501,8 @@ export default function GestionEquipoPage() {
           </ul>
         )}
       </section>
+      </>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingUp, DollarSign, Users, Target } from 'lucide-react';
+import { AlertTriangle, TrendingUp, DollarSign, Users, Target, Clock, FileText } from 'lucide-react';
 import {
   AreaChart,
   Area,
@@ -22,6 +22,8 @@ interface DashboardData {
   monthlyBudget: number;
   actualExpenses: number;
   revenueData: any[];
+  teamAttendance: any[];
+  pendingRequests: any[];
   loading: boolean;
   error: string | null;
 }
@@ -31,7 +33,11 @@ interface DisciplinaryAction {
   status: string;
 }
 
-const ManagerDashboard: React.FC = () => {
+interface ManagerDashboardProps {
+  userRole: string;
+}
+
+const ManagerDashboard: React.FC<ManagerDashboardProps> = ({ userRole }) => {
   const [data, setData] = useState<DashboardData>({
     monthlyPayroll: 0,
     totalRevenue: 0,
@@ -40,6 +46,8 @@ const ManagerDashboard: React.FC = () => {
     monthlyBudget: 50000,
     actualExpenses: 0,
     revenueData: [],
+    teamAttendance: [],
+    pendingRequests: [],
     loading: true,
     error: null,
   });
@@ -122,11 +130,30 @@ const ManagerDashboard: React.FC = () => {
 
       // Generate revenue vs expenses data for chart
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-      const revenueData = months.map((month, idx) => ({
+      const revenueData = totalRevenue > 0 ? months.map((month, idx) => ({
         month,
         revenue: Math.floor(totalRevenue / 6) + Math.random() * 5000,
         expenses: Math.floor(actualExpenses / 6) + Math.random() * 3000,
-      }));
+      })) : [];
+
+      // Fetch team attendance for supervisors
+      const { data: attendanceToday, error: attendanceTodayError } = await supabase
+        .from('attendance_logs')
+        .select('user_id, state, created_at')
+        .gte('created_at', new Date().toISOString().split('T')[0])
+        .order('created_at', { ascending: false });
+
+      const teamAttendance = attendanceToday?.slice(0, 10) || [];
+
+      // Fetch pending HR requests for supervisors
+      const { data: requests, error: requestsError } = await supabase
+        .from('hr_requests')
+        .select('id, user_id, type, status, created_at')
+        .eq('status', 'pendiente')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const pendingRequests = requests || [];
 
       setData({
         monthlyPayroll: payroll,
@@ -136,6 +163,8 @@ const ManagerDashboard: React.FC = () => {
         monthlyBudget: 50000,
         actualExpenses,
         revenueData,
+        teamAttendance,
+        pendingRequests,
         loading: false,
         error: null,
       });
@@ -161,17 +190,24 @@ const ManagerDashboard: React.FC = () => {
   }
 
   const budgetPercentage = (data.actualExpenses / data.monthlyBudget) * 100;
+  const isGerente = userRole === 'gerente';
+  const isSupervisor = userRole === 'supervisor';
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Executive Dashboard</h1>
-          <p className="text-gray-600">Key performance indicators and business intelligence</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            {isGerente ? 'Executive Dashboard' : 'Supervisor Dashboard'}
+          </h1>
+          <p className="text-gray-600">
+            {isGerente ? 'Key performance indicators and business intelligence' : 'Team management and performance'}
+          </p>
         </div>
 
-        {/* KPIs Section */}
+        {/* KPIs Section - Only for Gerente */}
+        {isGerente && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Monthly Payroll */}
           <div className="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
@@ -213,6 +249,51 @@ const ManagerDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+        )}
+
+        {/* Supervisor KPIs - Team Stats */}
+        {isSupervisor && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Team Size */}
+          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Team Size</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {data.teamAttendance.length}
+                </p>
+              </div>
+              <Users className="w-12 h-12 text-orange-500 opacity-20" />
+            </div>
+          </div>
+
+          {/* Pending Requests */}
+          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending Requests</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {data.pendingRequests.length}
+                </p>
+              </div>
+              <FileText className="w-12 h-12 text-blue-500 opacity-20" />
+            </div>
+          </div>
+
+          {/* Team Attendance */}
+          <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Today</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {data.teamAttendance.filter(a => a.state === 'entrada').length}
+                </p>
+              </div>
+              <Clock className="w-12 h-12 text-green-500 opacity-20" />
+            </div>
+          </div>
+        </div>
+        )}
 
         {/* BI Alerts - Employees at Risk */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
@@ -263,7 +344,78 @@ const ManagerDashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Budget Section */}
+        {/* Supervisor: Team Attendance Table */}
+        {isSupervisor && data.teamAttendance.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-6 h-6 text-orange-500" />
+            <h2 className="text-xl font-bold text-gray-900">Team Attendance Today</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Employee ID</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.teamAttendance.slice(0, 8).map((att, idx) => (
+                  <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm text-gray-900">{att.user_id.substring(0, 8)}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                        att.state === 'entrada' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {att.state}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {new Date(att.created_at).toLocaleTimeString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        )}
+
+        {/* Supervisor: Pending Requests */}
+        {isSupervisor && data.pendingRequests.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="w-6 h-6 text-blue-500" />
+            <h2 className="text-xl font-bold text-gray-900">Pending HR Requests</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Employee</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.pendingRequests.slice(0, 8).map((req) => (
+                  <tr key={req.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm text-gray-900">{req.user_id.substring(0, 8)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 capitalize">{req.type}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {new Date(req.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        )}
+
+        {/* Budget Section - Only for Gerente */}
+        {isGerente && (
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Monthly Budget Status</h2>
           <div className="mb-2 flex justify-between">
@@ -284,8 +436,10 @@ const ManagerDashboard: React.FC = () => {
             {budgetPercentage.toFixed(1)}% of monthly budget used
           </p>
         </div>
+        )}
 
-        {/* Revenue vs Expenses Chart */}
+        {/* Revenue vs Expenses Chart - Only for Gerente */}
+        {isGerente && data.revenueData.length > 0 && (
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Revenue vs Expenses</h2>
           <ResponsiveContainer width="100%" height={300}>
@@ -328,6 +482,7 @@ const ManagerDashboard: React.FC = () => {
             </AreaChart>
           </ResponsiveContainer>
         </div>
+        )}
 
         {/* Company Profile Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
