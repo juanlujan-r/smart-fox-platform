@@ -60,16 +60,16 @@ export default function Sidebar() {
 
       <nav className="flex-1 space-y-1">
         {menu.filter(item => item.roles.includes(userRole)).map((item) => (
-          <Link key={item.path} href={item.path} className="flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl transition-all font-semibold text-sm group">
-            <item.icon className="w-5 h-5 group-hover:text-[#FF8C00] transition-colors" /> 
+          <Link key={item.path} href={item.path} className="flex items-center gap-3 p-3 text-gray-300 bg-transparent hover:bg-gray-800 hover:text-white rounded-xl transition-all font-semibold text-sm group">
+            <item.icon className="w-5 h-5 text-gray-400 group-hover:text-[#FF8C00] transition-colors" /> 
             {item.name}
           </Link>
         ))}
       </nav>
 
-      <div className="pt-4 border-t border-gray-800">
-        <button onClick={handleLogout} className="flex items-center gap-3 p-3 w-full text-red-400 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-all font-bold text-sm group">
-          <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" /> 
+      <div className="pt-4 border-t border-gray-800 bg-[#1a202c]">
+        <button onClick={handleLogout} className="flex items-center gap-3 p-3 w-full text-gray-300 bg-transparent hover:bg-red-900/30 hover:text-red-400 rounded-xl transition-all font-bold text-sm group">
+          <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-400 group-hover:scale-110 transition-all" /> 
           Cerrar Sesión
         </button>
       </div>

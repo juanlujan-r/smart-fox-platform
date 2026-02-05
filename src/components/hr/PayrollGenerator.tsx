@@ -12,40 +12,71 @@ export default function PayrollGenerator() {
 
   const generatePreview = async () => {
     if (!startDate || !endDate) return alert("Selecciona fechas");
+    if (new Date(startDate) > new Date(endDate)) return alert("Fecha inicio mayor que fin");
     setLoading(true);
 
     try {
       // 1. Obtener empleados y sus tarifas
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, role, base_salary, minute_rate');
+        .select('id, full_name, role, base_salary, minute_rate')
+        .in('role', ['empleado', 'supervisor']);
+
+      if (profilesError) throw profilesError;
 
       // 2. Obtener logs de asistencia en el rango
-      const { data: logs } = await supabase
+      const { data: logs, error: logsError } = await supabase
         .from('attendance_logs')
         .select('*')
-        .gte('created_at', new Date(startDate).toISOString())
+        .gte('created_at', new Date(startDate + 'T00:00:00').toISOString())
         .lte('created_at', new Date(endDate + 'T23:59:59').toISOString())
-        .order('created_at');
+        .order('user_id, created_at');
+
+      if (logsError) throw logsError;
 
       // 3. Calcular tiempo trabajado por empleado
       const report = profiles?.map(emp => {
         const empLogs = logs?.filter(l => l.user_id === emp.id) || [];
         let totalMinutes = 0;
 
-        // Lógica simple de cálculo de tiempos (entrada -> salida/siguiente estado)
-        empLogs.forEach((log, index) => {
-          if (['entrada', 'reunion'].includes(log.state)) {
-            const start = new Date(log.created_at).getTime();
-            // Buscar siguiente log o usar hora actual si es hoy
-            const nextLog = empLogs[index + 1];
-            const end = nextLog ? new Date(nextLog.created_at).getTime() : start; // Simplificado para preview
+        // Group logs by day to calculate daily hours
+        const logsByDay = new Map<string, any[]>();
+        empLogs.forEach(log => {
+          const day = new Date(log.created_at).toISOString().split('T')[0];
+          if (!logsByDay.has(day)) logsByDay.set(day, []);
+          logsByDay.get(day)!.push(log);
+        });
+
+        // For each day, calculate entrada to salida
+        logsByDay.forEach((dayLogs) => {
+          const entradas = dayLogs.filter(l => l.state === 'entrada');
+          const salidas = dayLogs.filter(l => l.state === 'salida');
+          
+          // Simple approach: first entrada to last salida
+          if (entradas.length > 0 && salidas.length > 0) {
+            const firstEntrada = new Date(entradas[0].created_at).getTime();
+            const lastSalida = new Date(salidas[salidas.length - 1].created_at).getTime();
             
-            if (nextLog) {
-                totalMinutes += (end - start) / (1000 * 60);
+            let dayMinutes = (lastSalida - firstEntrada) / (1000 * 60);
+            
+            // Subtract breaks if they exist
+            const breakStarts = dayLogs
+              .filter(l => l.estimated_break_start)
+              .map(l => new Date(l.estimated_break_start).getTime());
+            const breakEnds = dayLogs
+              .filter(l => l.estimated_break_end)
+              .map(l => new Date(l.estimated_break_end).getTime());
+            
+            if (breakStarts.length > 0 && breakEnds.length > 0) {
+              const breakMinutes = (breakEnds[0] - breakStarts[0]) / (1000 * 60);
+              dayMinutes = Math.max(0, dayMinutes - breakMinutes);
             }
+            
+            totalMinutes += dayMinutes;
           }
         });
+
+        const totalPay = Math.round(totalMinutes * (emp.minute_rate || 0));
 
         return {
           id: emp.id,
@@ -54,13 +85,14 @@ export default function PayrollGenerator() {
           salary: emp.base_salary,
           minute_rate: emp.minute_rate,
           minutes_worked: Math.floor(totalMinutes),
-          total_pay: Math.floor(totalMinutes * (emp.minute_rate || 0))
+          total_pay: totalPay
         };
-      }).filter(r => r.total_pay > 0); // Solo mostrar si trabajaron
+      }).filter(r => r.minutes_worked > 0); // Solo mostrar si trabajaron
 
       setPreview(report || []);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      alert("Error al generar nómina: " + (e.message || "Intenta de nuevo"));
     } finally {
       setLoading(false);
     }
