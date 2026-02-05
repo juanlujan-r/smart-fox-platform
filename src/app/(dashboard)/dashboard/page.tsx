@@ -221,12 +221,7 @@ export default function Dashboard() {
     );
   }
 
-  // Manager/Supervisor view
-  if (userRole === 'supervisor' || userRole === 'gerente') {
-    return <ManagerDashboard userRole={userRole} />;
-  }
-
-  // Employee view (default)
+  // Universal view - all roles see ShiftControl + role-specific widgets
   const stateLabels: Record<string, string> = {
     entrada: 'En turno',
     descanso: 'Descanso',
@@ -259,7 +254,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Shift Control (session verified only) */}
+        {/* Shift Control (UNIVERSAL - all roles) */}
         {sessionVerified && (
           <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-6 border border-orange-100">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Control de Asistencia</h2>
@@ -267,155 +262,164 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Work Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Work Hours Card */}
-          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Horas Trabajadas</p>
-                <p className="text-4xl font-bold text-gray-900 mt-2">{workHours}h</p>
-                <p className="text-xs text-gray-500 mt-1">Este mes</p>
-              </div>
-              <Clock className="w-16 h-16 text-orange-500 opacity-20" />
-            </div>
-          </div>
-
-          {/* Today's Schedule Card */}
-          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Mi Turno Hoy</p>
-                <p className="text-4xl font-bold text-gray-900 mt-2">
-                  {scheduledStart || '--:--'}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Salida: {scheduledEnd || '--:--'}
-                </p>
-              </div>
-              <Calendar className="w-16 h-16 text-blue-500 opacity-20" />
-            </div>
-          </div>
-
-          {/* Rendimiento de Turnos Card */}
-          <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Rendimiento de Turnos</p>
-                <p className="text-4xl font-bold text-gray-900 mt-2">
-                  {compliancePercent}%
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Cumplimiento diario</p>
-              </div>
-              <div className="relative w-16 h-16">
-                <div className="absolute inset-0 rounded-full border-4 border-orange-100" />
-                <div
-                  className="absolute inset-0 rounded-full border-4 border-[#FF8C00]"
-                  style={{
-                    clipPath: `inset(${100 - compliancePercent}% 0 0 0)`
-                  }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#FF8C00]">
-                  {compliancePercent}%
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Temporizador de Estado Actual */}
-        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg shadow-lg p-6 text-white">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-orange-300 font-bold">Temporizador de Estado Actual</p>
-              <h3 className="text-2xl font-bold mt-2">
-                {stateLabels[latestState] || 'Estado desconocido'}
-              </h3>
-              <p className="text-sm text-gray-300 mt-1">
-                Llevas {hours > 0 ? `${hours}h ` : ''}{displayMinutes}m {displaySeconds}s
-              </p>
-            </div>
-            <div className="font-mono text-3xl md:text-4xl tracking-widest text-orange-400">
-              {hours > 0 ? String(hours).padStart(2, '0') + ':' : ''}{displayMinutes}:{displaySeconds}
-            </div>
-          </div>
-        </div>
-
-        {/* Estadísticas de Acceso (only if in 'entrada') */}
-        {showCompliance && (
-          <div className="bg-white rounded-lg shadow-lg p-6 border border-orange-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Estadísticas de Acceso</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Trabajo Acumulado</p>
-                <p className="text-2xl font-bold text-gray-900 mt-2">
-                  {Math.floor(actualWorkMinutes / 60)}h {String(actualWorkMinutes % 60).padStart(2, '0')}m
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Horario Programado</p>
-                <p className="text-2xl font-bold text-gray-900 mt-2">
-                  {scheduledStart || '--:--'} - {scheduledEnd || '--:--'}
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
-                <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Cumplimiento</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <div className="relative w-14 h-14">
-                    <svg className="w-14 h-14 transform -rotate-90">
-                      <circle
-                        cx="28"
-                        cy="28"
-                        r="24"
-                        stroke="#FFE5CC"
-                        strokeWidth="6"
-                        fill="transparent"
-                      />
-                      <circle
-                        cx="28"
-                        cy="28"
-                        r="24"
-                        stroke="#FF8C00"
-                        strokeWidth="6"
-                        fill="transparent"
-                        strokeDasharray={2 * Math.PI * 24}
-                        strokeDashoffset={(1 - compliancePercent / 100) * 2 * Math.PI * 24}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#FF8C00]">
-                      {compliancePercent}%
-                    </span>
-                  </div>
+        {/* Role-Specific Content */}
+        {userRole === 'supervisor' || userRole === 'gerente' ? (
+          /* Manager/Supervisor Dashboard */
+          <ManagerDashboard userRole={userRole} />
+        ) : (
+          /* Employee-Specific Widgets */
+          <>
+            {/* Work Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              {/* Work Hours Card */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-2xl font-bold text-gray-900">{compliancePercent}%</p>
-                    <p className="text-xs text-gray-500">Cumplimiento</p>
+                    <p className="text-sm font-medium text-gray-600">Horas Trabajadas</p>
+                    <p className="text-4xl font-bold text-gray-900 mt-2">{workHours}h</p>
+                    <p className="text-xs text-gray-500 mt-1">Este mes</p>
+                  </div>
+                  <Clock className="w-16 h-16 text-orange-500 opacity-20" />
+                </div>
+              </div>
+
+              {/* Today's Schedule Card */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Mi Turno Hoy</p>
+                    <p className="text-4xl font-bold text-gray-900 mt-2">
+                      {scheduledStart || '--:--'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Salida: {scheduledEnd || '--:--'}
+                    </p>
+                  </div>
+                  <Calendar className="w-16 h-16 text-blue-500 opacity-20" />
+                </div>
+              </div>
+
+              {/* Rendimiento de Turnos Card */}
+              <div className="bg-white rounded-lg shadow-lg p-6 border-l-4 border-orange-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Rendimiento de Turnos</p>
+                    <p className="text-4xl font-bold text-gray-900 mt-2">
+                      {compliancePercent}%
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Cumplimiento diario</p>
+                  </div>
+                  <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 rounded-full border-4 border-orange-100" />
+                    <div
+                      className="absolute inset-0 rounded-full border-4 border-[#FF8C00]"
+                      style={{
+                        clipPath: `inset(${100 - compliancePercent}% 0 0 0)`
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#FF8C00]">
+                      {compliancePercent}%
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+
+            {/* Temporizador de Estado Actual */}
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg shadow-lg p-6 text-white">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-orange-300 font-bold">Temporizador de Estado Actual</p>
+                  <h3 className="text-2xl font-bold mt-2">
+                    {stateLabels[latestState] || 'Estado desconocido'}
+                  </h3>
+                  <p className="text-sm text-gray-300 mt-1">
+                    Llevas {hours > 0 ? `${hours}h ` : ''}{displayMinutes}m {displaySeconds}s
+                  </p>
+                </div>
+                <div className="font-mono text-3xl md:text-4xl tracking-widest text-orange-400">
+                  {hours > 0 ? String(hours).padStart(2, '0') + ':' : ''}{displayMinutes}:{displaySeconds}
+                </div>
+              </div>
+            </div>
+
+            {/* Estadísticas de Acceso (only if in 'entrada') */}
+            {showCompliance && (
+              <div className="bg-white rounded-lg shadow-lg p-6 border border-orange-100">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Estadísticas de Acceso</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                    <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Trabajo Acumulado</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-2">
+                      {Math.floor(actualWorkMinutes / 60)}h {String(actualWorkMinutes % 60).padStart(2, '0')}m
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                    <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Horario Programado</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-2">
+                      {scheduledStart || '--:--'} - {scheduledEnd || '--:--'}
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
+                    <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Cumplimiento</p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="relative w-14 h-14">
+                        <svg className="w-14 h-14 transform -rotate-90">
+                          <circle
+                            cx="28"
+                            cy="28"
+                            r="24"
+                            stroke="#FFE5CC"
+                            strokeWidth="6"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="28"
+                            cy="28"
+                            r="24"
+                            stroke="#FF8C00"
+                            strokeWidth="6"
+                            fill="transparent"
+                            strokeDasharray={2 * Math.PI * 24}
+                            strokeDashoffset={(1 - compliancePercent / 100) * 2 * Math.PI * 24}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-[#FF8C00]">
+                          {compliancePercent}%
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-gray-900">{compliancePercent}%</p>
+                        <p className="text-xs text-gray-500">Cumplimiento</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
+                <h3 className="text-lg font-semibold mb-2">Estado Actual</h3>
+                <p className="text-3xl font-bold">Activo</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+                <h3 className="text-lg font-semibold mb-2">Solicitudes</h3>
+                <p className="text-3xl font-bold">0</p>
+                <p className="text-sm opacity-90">Pendientes</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+                <h3 className="text-lg font-semibold mb-2">Desempeño</h3>
+                <p className="text-3xl font-bold">95%</p>
+                <p className="text-sm opacity-90">Puntualidad</p>
+              </div>
+            </div>
+          </>
         )}
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
-            <h3 className="text-lg font-semibold mb-2">Estado Actual</h3>
-            <p className="text-3xl font-bold">Activo</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-            <h3 className="text-lg font-semibold mb-2">Solicitudes</h3>
-            <p className="text-3xl font-bold">0</p>
-            <p className="text-sm opacity-90">Pendientes</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-            <h3 className="text-lg font-semibold mb-2">Desempeño</h3>
-            <p className="text-3xl font-bold">95%</p>
-            <p className="text-sm opacity-90">Puntualidad</p>
-          </div>
-        </div>
       </div>
     </div>
   );

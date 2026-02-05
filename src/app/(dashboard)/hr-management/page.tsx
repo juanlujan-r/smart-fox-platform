@@ -175,7 +175,27 @@ export default function GestionEquipoPage() {
         if (requestsRes.error) {
           console.error('Requests error:', requestsRes.error);
         } else if (requestsRes.data) {
-          setPendingRequests(requestsRes.data as HrRequestRow[]);
+          // Filter requests based on user role hierarchy
+          let filteredRequests = requestsRes.data as HrRequestRow[];
+          
+          if ((userRole === 'supervisor' || userRole === 'gerente') && profilesRes.data) {
+            // Use already-fetched profiles to filter by hierarchy
+            const profileMap = new Map<string, string>();
+            (profilesRes.data as ProfileWithRole[]).forEach(p => {
+              profileMap.set(p.id, p.role || 'empleado');
+            });
+            
+            const allowedRoles = userRole === 'gerente' 
+              ? ['supervisor', 'empleado']  // Gerente sees supervisor and employee requests
+              : ['empleado'];                 // Supervisor sees only employee requests
+            
+            filteredRequests = filteredRequests.filter(r => {
+              const requesterRole = profileMap.get(r.user_id);
+              return allowedRoles.includes(requesterRole || 'empleado');
+            });
+          }
+          
+          setPendingRequests(filteredRequests);
         }
 
         if (schedulesRes.error) {
