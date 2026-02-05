@@ -43,11 +43,8 @@ export default function RequestsPage() {
 
         if (uploadError) throw uploadError;
 
-        const { data: publicData } = supabase.storage
-          .from('hr-attachments')
-          .getPublicUrl(filePath);
-          
-        fileUrl = publicData.publicUrl;
+        // Guardar path, no URL pública (más flexible para cambios futuros)
+        fileUrl = filePath;
       }
 
       // INSERTAR EN BASE DE DATOS

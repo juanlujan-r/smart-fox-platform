@@ -345,6 +345,12 @@ export default function GestionEquipoPage() {
   };
 
   const openAttachment = async (path: string) => {
+    // Si ya es una URL (comienza con http), abrirla directamente
+    if (path.startsWith('http')) {
+      window.open(path, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    // Si es un path, crear URL firmada
     const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
     if (error) {
       pushToast('No se pudo abrir el adjunto: ' + error.message, 'error');

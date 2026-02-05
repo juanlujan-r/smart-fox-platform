@@ -278,7 +278,7 @@ export default function MisTurnosPage() {
         requested_start_time: exchangeRequest.requested_start_time,
         requested_end_time: exchangeRequest.requested_end_time,
         reason: exchangeRequest.reason || null,
-        status: 'pending',
+        status: 'pendiente',
       },
     ]);
     setExchangeSubmitting(false);
