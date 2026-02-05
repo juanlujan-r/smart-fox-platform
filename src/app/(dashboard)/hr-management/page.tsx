@@ -89,6 +89,7 @@ export default function GestionEquipoPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [nowTs, setNowTs] = useState(Date.now());
   const [activeTab, setActiveTab] = useState<'equipo' | 'horarios'>('equipo');
+  const [userRole, setUserRole] = useState<string>('');
 
   const loadAttendance = async () => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -118,6 +119,17 @@ export default function GestionEquipoPage() {
   useEffect(() => {
     const load = async () => {
       const today = format(new Date(), 'yyyy-MM-dd');
+
+      // Fetch current user's role
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        if (profile) setUserRole(profile.role || '');
+      }
 
       const [profilesRes, logsRes, requestsRes, schedulesRes, logsTodayRes] = await Promise.all([
         supabase.from('profiles').select('id, role, personal_data').order('id'),
