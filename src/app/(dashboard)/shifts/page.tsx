@@ -72,43 +72,63 @@ export default function MisTurnosPage() {
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+          console.error('Auth error:', authError);
+          setLoading(false);
+          return;
+        }
+        
+        if (!user) {
+          setLoading(false);
+          return;
+        }
+        setUserId(user.id);
+
+        const now = new Date();
+        const monthAgo = subMonths(now, 1);
+        const from = format(startOfDay(monthAgo), "yyyy-MM-dd'T'00:00:00");
+        const to = format(endOfDay(addDays(now, 1)), "yyyy-MM-dd'T'23:59:59");
+
+        const { data: logsData, error: logsError } = await supabase
+          .from('attendance_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('created_at', from)
+          .lte('created_at', to)
+          .order('created_at', { ascending: true });
+
+        if (logsError) {
+          console.error('Error loading attendance logs:', logsError);
+        } else {
+          setLogs((logsData ?? []) as AttendanceLogRow[]);
+        }
+
+        const scheduleFrom = format(startOfWeek(viewStart, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        const scheduleTo = format(endOfWeek(viewStart, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+        const { data: schedData, error: schedError } = await supabase
+          .from('schedules')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('scheduled_date', scheduleFrom)
+          .lte('scheduled_date', scheduleTo)
+          .order('scheduled_date');
+
+        if (schedError) {
+          console.error('Error loading schedules:', schedError);
+        } else {
+          setSchedules((schedData ?? []) as ScheduleRow[]);
+        }
+      } catch (err: any) {
+        console.error('Error in load:', err);
+      } finally {
         setLoading(false);
-        return;
       }
-      setUserId(user.id);
-
-      const now = new Date();
-      const monthAgo = subMonths(now, 1);
-      const from = format(startOfDay(monthAgo), "yyyy-MM-dd'T'00:00:00");
-      const to = format(endOfDay(addDays(now, 1)), "yyyy-MM-dd'T'23:59:59");
-
-      const { data: logsData } = await supabase
-        .from('attendance_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('created_at', from)
-        .lte('created_at', to)
-        .order('created_at', { ascending: true });
-
-      setLogs((logsData ?? []) as AttendanceLogRow[]);
-
-      const scheduleFrom = format(startOfWeek(viewStart, { weekStartsOn: 1 }), 'yyyy-MM-dd');
-      const scheduleTo = format(endOfWeek(viewStart, { weekStartsOn: 1 }), 'yyyy-MM-dd');
-      const { data: schedData } = await supabase
-        .from('schedules')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('scheduled_date', scheduleFrom)
-        .lte('scheduled_date', scheduleTo)
-        .order('scheduled_date');
-
-      setSchedules((schedData ?? []) as ScheduleRow[]);
-      setLoading(false);
     };
     load();
-  }, [userId, viewStart]);
+  }, [viewStart]);
 
   const hoursByDay = useMemo(() => {
     const byDay: Record<string, { start: Date; end: Date }> = {};

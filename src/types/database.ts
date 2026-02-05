@@ -91,6 +91,8 @@ export interface ScheduleRow {
   scheduled_date: string; // YYYY-MM-DD
   start_time: string;    // HH:MM or HH:MM:SS
   end_time: string;
+  break_start?: string | null;
+  break_end?: string | null;
   created_at?: string;
 }
 

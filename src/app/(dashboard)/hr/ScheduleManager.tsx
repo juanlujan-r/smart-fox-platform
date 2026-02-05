@@ -45,6 +45,7 @@ export default function ScheduleManager() {
 	const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }));
 	const [editing, setEditing] = useState<EditableSchedule | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const [breakUserId, setBreakUserId] = useState<string>('');
@@ -54,21 +55,39 @@ export default function ScheduleManager() {
 
 	useEffect(() => {
 		const load = async () => {
-			const start = format(weekStart, 'yyyy-MM-dd');
-			const end = format(addDays(weekStart, 6), 'yyyy-MM-dd');
+			try {
+				setLoading(true);
+				setError(null);
+				const start = format(weekStart, 'yyyy-MM-dd');
+				const end = format(addDays(weekStart, 6), 'yyyy-MM-dd');
 
-			const [profilesRes, schedulesRes] = await Promise.all([
-				supabase.from('profiles').select('id, role, personal_data').order('id'),
-				supabase
-					.from('schedules')
-					.select('*')
-					.gte('scheduled_date', start)
-					.lte('scheduled_date', end)
-					.order('scheduled_date', { ascending: true }),
-			]);
+				const [profilesRes, schedulesRes] = await Promise.all([
+					supabase.from('profiles').select('id, role, personal_data').order('id'),
+					supabase
+						.from('schedules')
+						.select('*')
+						.gte('scheduled_date', start)
+						.lte('scheduled_date', end)
+						.order('scheduled_date', { ascending: true }),
+				]);
 
-			if (profilesRes.data) setProfiles(profilesRes.data as ProfileWithRole[]);
-			if (schedulesRes.data) setSchedules(schedulesRes.data as ScheduleRow[]);
+				if (profilesRes.error) {
+					console.error('Error loading profiles:', profilesRes.error);
+					setError('Error al cargar empleados: ' + profilesRes.error.message);
+				}
+				if (schedulesRes.error) {
+					console.error('Error loading schedules:', schedulesRes.error);
+					setError('Error al cargar horarios: ' + schedulesRes.error.message);
+				}
+
+				if (profilesRes.data) setProfiles(profilesRes.data as ProfileWithRole[]);
+				if (schedulesRes.data) setSchedules(schedulesRes.data as ScheduleRow[]);
+			} catch (err: any) {
+				console.error('Error in load:', err);
+				setError('Error al cargar datos: ' + (err.message || 'Intente de nuevo'));
+			} finally {
+				setLoading(false);
+			}
 		};
 		load();
 	}, [weekStart]);
@@ -151,6 +170,7 @@ export default function ScheduleManager() {
 			}
 
 			setSaving(true);
+			setError(null);
 			const payload = {
 				id: editing.id,
 				user_id: editing.user_id,
@@ -168,7 +188,8 @@ export default function ScheduleManager() {
 				.single();
 
 			if (upsertError) {
-				setError(upsertError.message);
+				console.error('Error upserting schedule:', upsertError);
+				setError('Error al guardar: ' + upsertError.message);
 				return;
 			}
 
@@ -181,6 +202,9 @@ export default function ScheduleManager() {
 
 			setEditing(null);
 			setError(null);
+		} catch (err: any) {
+			console.error('Error in handleSave:', err);
+			setError('Error al guardar: ' + (err.message || 'Intente de nuevo'));
 		} finally {
 			setSaving(false);
 		}
@@ -191,38 +215,44 @@ export default function ScheduleManager() {
 			setError('Selecciona un empleado y un día.');
 			return;
 		}
-		setSaving(true);
-		setError(null);
-		const existing = scheduleByUserDate.get(`${breakUserId}-${breakDate}`) as any;
-		const payload = {
-			id: existing?.id,
-			user_id: breakUserId,
-			scheduled_date: breakDate,
-			start_time: existing?.start_time ?? '08:00',
-			end_time: existing?.end_time ?? '17:00',
-			break_start: breakStart,
-			break_end: breakEnd,
-		} as any;
+		try {
+			setSaving(true);
+			setError(null);
+			const existing = scheduleByUserDate.get(`${breakUserId}-${breakDate}`) as any;
+			const payload = {
+				id: existing?.id,
+				user_id: breakUserId,
+				scheduled_date: breakDate,
+				start_time: existing?.start_time ?? '08:00',
+				end_time: existing?.end_time ?? '17:00',
+				break_start: breakStart,
+				break_end: breakEnd,
+			} as any;
 
-		const { data, error: upsertError } = await supabase
-			.from('schedules')
-			.upsert(payload, { onConflict: 'user_id,scheduled_date' })
-			.select('*')
-			.single();
+			const { data, error: upsertError } = await supabase
+				.from('schedules')
+				.upsert(payload, { onConflict: 'user_id,scheduled_date' })
+				.select('*')
+				.single();
 
-		if (upsertError) {
-			setError(upsertError.message);
+			if (upsertError) {
+				console.error('Error upserting break window:', upsertError);
+				setError('Error al guardar: ' + upsertError.message);
+				return;
+			}
+
+			if (data) {
+				setSchedules((prev) => {
+					const filtered = prev.filter((s) => s.id !== data.id);
+					return [...filtered, data as ScheduleRow].sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+				});
+			}
+		} catch (err: any) {
+			console.error('Error in saveBreakWindow:', err);
+			setError('Error al guardar: ' + (err.message || 'Intente de nuevo'));
+		} finally {
 			setSaving(false);
-			return;
 		}
-
-		if (data) {
-			setSchedules((prev) => {
-				const filtered = prev.filter((s) => s.id !== data.id);
-				return [...filtered, data as ScheduleRow].sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
-			});
-		}
-		setSaving(false);
 	};
 
 	return (
@@ -231,6 +261,7 @@ export default function ScheduleManager() {
 				<div className="flex items-center gap-2 text-gray-800">
 					<Calendar className="w-5 h-5 text-[#FF8C00]" />
 					<h2 className="text-lg font-bold">Gestión de Horarios</h2>
+					{loading && <span className="text-xs text-gray-500">(Cargando...)</span>}
 				</div>
 				<div className="flex items-center gap-2">
 					<button

@@ -118,54 +118,88 @@ export default function GestionEquipoPage() {
 
   useEffect(() => {
     const load = async () => {
-      const today = format(new Date(), 'yyyy-MM-dd');
+      try {
+        const today = format(new Date(), 'yyyy-MM-dd');
 
-      // Fetch current user's role
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        if (profile) setUserRole(profile.role || '');
+        // Fetch current user's role
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) {
+          console.error('Auth error:', authError);
+        }
+        if (user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          if (profileError) {
+            console.error('Profile error:', profileError);
+          }
+          if (profile) setUserRole(profile.role || '');
+        }
+
+        const [profilesRes, logsRes, requestsRes, schedulesRes, logsTodayRes] = await Promise.all([
+          supabase.from('profiles').select('id, role, personal_data').order('id'),
+          supabase
+            .from('attendance_logs')
+            .select('*')
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('hr_requests')
+            .select('*')
+            .eq('status', 'pendiente')
+            .order('created_at', { ascending: false }),
+          supabase
+            .from('schedules')
+            .select('*')
+            .eq('scheduled_date', today),
+          supabase
+            .from('attendance_logs')
+            .select('user_id, created_at, state, type')
+            .gte('created_at', `${today}T00:00:00`)
+            .lte('created_at', `${today}T23:59:59`),
+        ]);
+
+        if (profilesRes.error) {
+          console.error('Profiles error:', profilesRes.error);
+        } else if (profilesRes.data) {
+          setProfiles(profilesRes.data as ProfileWithRole[]);
+        }
+
+        if (logsRes.error) {
+          console.error('Logs error:', logsRes.error);
+        } else if (logsRes.data) {
+          setLogs(logsRes.data as AttendanceLogRow[]);
+        }
+
+        if (requestsRes.error) {
+          console.error('Requests error:', requestsRes.error);
+        } else if (requestsRes.data) {
+          setPendingRequests(requestsRes.data as HrRequestRow[]);
+        }
+
+        if (schedulesRes.error) {
+          console.error('Schedules error:', schedulesRes.error);
+        } else if (schedulesRes.data) {
+          setSchedules(schedulesRes.data as ScheduleRow[]);
+        }
+
+        if (logsTodayRes.error) {
+          console.error('Today logs error:', logsTodayRes.error);
+        } else {
+          const todayLogs = (logsTodayRes.data ?? []) as AttendanceLogRow[];
+          const todayEntradaUserIds = new Set<string>();
+          todayLogs.forEach((l) => {
+            const state = (l as { state?: string }).state ?? (l as { type?: string }).type;
+            if (state === 'entrada') todayEntradaUserIds.add(l.user_id);
+          });
+          setEntradaLogsToday(Array.from(todayEntradaUserIds).map((user_id) => ({ user_id })));
+        }
+      } catch (err: any) {
+        console.error('Error in load:', err);
+      } finally {
+        setLoading(false);
       }
-
-      const [profilesRes, logsRes, requestsRes, schedulesRes, logsTodayRes] = await Promise.all([
-        supabase.from('profiles').select('id, role, personal_data').order('id'),
-        supabase
-          .from('attendance_logs')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('hr_requests')
-          .select('*')
-          .eq('status', 'pendiente')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('schedules')
-          .select('*')
-          .eq('scheduled_date', today),
-        supabase
-          .from('attendance_logs')
-          .select('user_id, created_at, state, type')
-          .gte('created_at', `${today}T00:00:00`)
-          .lte('created_at', `${today}T23:59:59`),
-      ]);
-
-      if (profilesRes.data) setProfiles(profilesRes.data as ProfileWithRole[]);
-      if (logsRes.data) setLogs(logsRes.data as AttendanceLogRow[]);
-      if (requestsRes.data) setPendingRequests(requestsRes.data as HrRequestRow[]);
-      if (schedulesRes.data) setSchedules(schedulesRes.data as ScheduleRow[]);
-
-      const todayLogs = (logsTodayRes.data ?? []) as AttendanceLogRow[];
-      const todayEntradaUserIds = new Set<string>();
-      todayLogs.forEach((l) => {
-        const state = (l as { state?: string }).state ?? (l as { type?: string }).type;
-        if (state === 'entrada') todayEntradaUserIds.add(l.user_id);
-      });
-      setEntradaLogsToday(Array.from(todayEntradaUserIds).map((user_id) => ({ user_id })));
-      setLoading(false);
     };
     load();
   }, []);

@@ -20,8 +20,16 @@ export default function ShiftControl() {
   // Carga de datos estable
   const fetchDailyLogs = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Error de autenticación:', authError);
+        return;
+      }
+      
+      if (!user) {
+        return;
+      }
 
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -33,7 +41,10 @@ export default function ShiftControl() {
         .gte('created_at', today.toISOString())
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error al cargar registros:', error);
+        return;
+      }
 
       if (data) {
         const lastLog = data[data.length - 1];
@@ -86,17 +97,28 @@ export default function ShiftControl() {
   const handleStateChange = async (newState: string) => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError) {
+        console.error('Error de autenticación:', authError);
+        alert('Error de autenticación. Por favor, vuelve a iniciar sesión.');
+        return;
+      }
+      
       if (!user) {
         alert("Error: No se encontró usuario autenticado.");
         return;
       }
 
-      const { error } = await supabase.from('attendance_logs').insert([
+      const { error: insertError } = await supabase.from('attendance_logs').insert([
         { user_id: user.id, state: newState }
       ]);
 
-      if (error) throw error;
+      if (insertError) {
+        console.error('Error al insertar log:', insertError);
+        alert(`Error al guardar: ${insertError.message || 'Intente de nuevo'}`);
+        return;
+      }
 
       await fetchDailyLogs(); // Recarga inmediata tras éxito
     } catch (error: any) {
