@@ -115,3 +115,20 @@ export interface ShiftExchangeRequestRow {
   status: 'pending' | 'approved' | 'rejected';
   created_at?: string;
 }
+
+// HR Requests (Reportar / Solicitar)
+export type HrRequestType = 'permiso' | 'licencia' | 'novedad' | 'vacaciones' | 'incapacidad';
+export type HrRequestStatus = 'pendiente' | 'aprobado' | 'rechazado';
+
+export interface HrRequestRow {
+  id: string;
+  user_id: string;
+  type: HrRequestType;
+  details: string | null;
+  start_date: string;
+  end_date: string;
+  attachment_url: string | null;
+  status: HrRequestStatus;
+  created_at?: string;
+  updated_at?: string;
+}
