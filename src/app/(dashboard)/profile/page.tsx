@@ -10,6 +10,7 @@ import {
   Loader2, 
   AlertCircle,
   Phone,
+  Mail,
   MapPin,
   Building2,
   Briefcase,
@@ -18,6 +19,7 @@ import {
 import { useToast } from '@/context/ToastContext';
 
 interface PersonalData {
+  email?: string;
   phone?: string;
   address?: string;
   city?: string;
@@ -40,6 +42,13 @@ interface SizesData {
   shoes?: string;
 }
 
+interface BankAccount {
+  account_number?: string;
+  bank_name?: string;
+  ach_code?: string;
+  account_type?: string;
+}
+
 interface Profile {
   id: string;
   full_name?: string;
@@ -50,6 +59,7 @@ interface Profile {
   personal_data?: PersonalData;
   medical_data?: MedicalData;
   sizes_data?: SizesData;
+  bank_account?: BankAccount;
 }
 
 const DOCUMENT_TYPES = [
@@ -63,6 +73,23 @@ const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'];
 const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
 const PANTS_SIZES = ['28', '30', '32', '34', '36', '38', '40', '42', '44'];
 const SHOE_SIZES = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'];
+
+const BANKS = [
+  { name: 'Bancolombia', ach: '1007' },
+  { name: 'Banco de Bogotá (Grupo Aval)', ach: '1001' },
+  { name: 'Davivienda', ach: '1051' },
+  { name: 'BBVA Colombia', ach: '1013' },
+  { name: 'Banco de Occidente (Grupo Aval)', ach: '1023' },
+  { name: 'Banco AV Villas (Grupo Aval)', ach: '1052' },
+  { name: 'Banco Popular (Grupo Aval)', ach: '1002' },
+  { name: 'Scotiabank Colpatria', ach: '1019' },
+  { name: 'Itaú', ach: '1014' },
+  { name: 'Banco GNB Sudameris', ach: '1012' },
+  { name: 'Banco Caja Social', ach: '1032' },
+  { name: 'Banco Agrario', ach: '1040' },
+];
+
+const ACCOUNT_TYPES = ['Ahorros', 'Corriente'];
 
 
 export default function ProfilePage() {
@@ -79,6 +106,7 @@ export default function ProfilePage() {
     hiring_date: '',
     role: '',
     personal_data: {
+      email: '',
       phone: '',
       address: '',
       city: '',
@@ -97,6 +125,12 @@ export default function ProfilePage() {
       shirt: 'M',
       pants: '32',
       shoes: '40',
+    },
+    bank_account: {
+      account_number: '',
+      bank_name: '',
+      ach_code: '',
+      account_type: '',
     },
   });
 
@@ -167,6 +201,9 @@ export default function ProfilePage() {
       const sizesDataObj = profile.sizes_data && typeof profile.sizes_data === 'object'
         ? profile.sizes_data
         : {};
+      const bankAccountObj = profile.bank_account && typeof profile.bank_account === 'object'
+        ? profile.bank_account
+        : {};
 
       const { error } = await supabase
         .from('profiles')
@@ -178,6 +215,7 @@ export default function ProfilePage() {
           personal_data: personalDataObj,
           medical_data: medicalDataObj,
           sizes_data: sizesDataObj,
+          bank_account: bankAccountObj,
         }, { onConflict: 'id' });
 
       if (error) {
@@ -218,6 +256,16 @@ export default function ProfilePage() {
       ...profile,
       sizes_data: {
         ...profile.sizes_data,
+        [field]: value,
+      },
+    });
+  };
+
+  const updateBankAccount = (field: keyof BankAccount, value: string) => {
+    setProfile({
+      ...profile,
+      bank_account: {
+        ...profile.bank_account,
         [field]: value,
       },
     });
@@ -298,6 +346,19 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <Mail className="w-4 h-4" /> Correo Corporativo
+                    </label>
+                    <input
+                      type="email"
+                      value={profile.personal_data?.email || ''}
+                      onChange={(e) => updatePersonalData('email', e.target.value)}
+                      placeholder="usuario@smartfox.com"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                       <Phone className="w-4 h-4" /> Teléfono Móvil
                     </label>
                     <input
@@ -362,6 +423,78 @@ export default function ProfilePage() {
                         className="px-4 py-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-amber-400 outline-none md:col-span-2"
                       />
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bank Account Tab */}
+            {activeTab === 'personal' && (
+              <div className="space-y-6 mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                    <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Datos Bancarios</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Información para depósitos de nómina</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Banco
+                    </label>
+                    <select
+                      value={profile.bank_account?.bank_name || ''}
+                      onChange={(e) => {
+                        const selectedBank = BANKS.find(b => b.name === e.target.value);
+                        updateBankAccount('bank_name', e.target.value);
+                        if (selectedBank) {
+                          updateBankAccount('ach_code', selectedBank.ach);
+                        }
+                      }}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    >
+                      <option value="">Selecciona un banco</option>
+                      {BANKS.map((bank) => (
+                        <option key={bank.ach} value={bank.name}>
+                          {bank.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Tipo de Cuenta
+                    </label>
+                    <select
+                      value={profile.bank_account?.account_type || ''}
+                      onChange={(e) => updateBankAccount('account_type', e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    >
+                      <option value="">Selecciona el tipo de cuenta</option>
+                      {ACCOUNT_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Número de Cuenta
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.bank_account?.account_number || ''}
+                      onChange={(e) => updateBankAccount('account_number', e.target.value)}
+                      placeholder="Ej: 123456789012"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF8C00] focus:border-transparent outline-none transition"
+                    />
                   </div>
                 </div>
               </div>
