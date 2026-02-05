@@ -10,19 +10,32 @@ export default function AdminPage() {
 
   useEffect(() => {
     const fetchUserRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        
-        if (profile?.role) {
-          setUserRole(profile.role);
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) {
+          console.error('Auth error:', authError);
+          setLoading(false);
+          return;
         }
+        
+        if (user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+          
+          if (!profileError && profile?.role) {
+            setUserRole(profile.role);
+          } else if (profileError) {
+            console.error('Error fetching profile:', profileError);
+          }
+        }
+      } catch (error) {
+        console.error('Error in fetchUserRole:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchUserRole();
   }, []);

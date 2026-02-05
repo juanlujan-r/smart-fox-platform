@@ -57,6 +57,7 @@ function timeStringToMinutes(t: string): number {
 export default function MisTurnosPage() {
   const { pushToast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AttendanceLogRow[]>([]);
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
@@ -86,6 +87,17 @@ export default function MisTurnosPage() {
           return;
         }
         setUserId(user.id);
+
+        // Fetch user role
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (profileData?.role) {
+          setUserRole(profileData.role);
+        }
 
         const now = new Date();
         const monthAgo = subMonths(now, 1);
@@ -320,6 +332,22 @@ export default function MisTurnosPage() {
           </div>
         </div>
       </section>
+
+      {/* Manager/Supervisor - No Shifts Assigned Message */}
+      {(userRole === 'gerente' || userRole === 'supervisor') && schedules.length === 0 && (
+        <section className="fox-card p-6 border border-amber-200 bg-amber-50">
+          <div className="flex items-start gap-4">
+            <AlertCircle className="w-6 h-6 text-amber-600 mt-1 flex-shrink-0" />
+            <div>
+              <h3 className="text-lg font-bold text-amber-900">Turnos no asignados</h3>
+              <p className="text-sm text-amber-700 mt-2">
+                Como {userRole === 'gerente' ? 'Gerente' : 'Supervisor'}, no tienes turnos asignados actualmente. 
+                Contacta al Departamento de Recursos Humanos para solicitar la asignación de tus turnos.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Calendar View + Shift Exchange button */}
       <section className="fox-card p-6">

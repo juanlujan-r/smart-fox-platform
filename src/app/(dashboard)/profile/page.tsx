@@ -157,17 +157,28 @@ export default function ProfilePage() {
         return;
       }
 
+      // Ensure JSON fields are valid objects
+      const personalDataObj = profile.personal_data && typeof profile.personal_data === 'object' 
+        ? profile.personal_data 
+        : {};
+      const medicalDataObj = profile.medical_data && typeof profile.medical_data === 'object'
+        ? profile.medical_data
+        : {};
+      const sizesDataObj = profile.sizes_data && typeof profile.sizes_data === 'object'
+        ? profile.sizes_data
+        : {};
+
       const { error } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: user.id,
           full_name: profile.full_name,
           document_id: profile.document_id,
           document_type: profile.document_type,
-          personal_data: profile.personal_data,
-          medical_data: profile.medical_data,
-          sizes_data: profile.sizes_data,
-        })
-        .eq('id', user.id);
+          personal_data: personalDataObj,
+          medical_data: medicalDataObj,
+          sizes_data: sizesDataObj,
+        }, { onConflict: 'id' });
 
       if (error) {
         throw error;

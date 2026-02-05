@@ -6,7 +6,7 @@ import {
   Calendar, CheckCircle, DollarSign, Clock, TrendingUp
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-// import * as XLSX from 'xlsx'; // Descomentar cuando instales xlsx
+import { es } from 'date-fns/locale';
 
 // Definición simple para evitar errores de TS
 interface EmployeeProfile {
@@ -59,19 +59,19 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
   const fetchDashboardData = async () => {
     try {
       // 1. Empleados
-      const { count: empCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+      const { count: empCount, error: empCountError } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
       
       // 2. Activos Ahora (Log más reciente no es offline)
       const today = new Date();
       today.setHours(0,0,0,0);
-      const { count: activeCount } = await supabase
+      const { count: activeCount, error: activeError } = await supabase
         .from('attendance_logs')
         .select('*', { count: 'exact', head: true })
         .eq('state', 'entrada')
         .gte('created_at', today.toISOString());
 
       // 3. Solicitudes Pendientes
-      const { data: reqs, count: reqCount } = await supabase
+      const { data: reqs = [], error: reqError } = await supabase
         .from('hr_requests')
         .select('id, type, status, user_id')
         .eq('status', 'pendiente');
@@ -84,56 +84,67 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
       };
       
       if (userRole === 'supervisor' || userRole === 'gerente') {
-        const { data: employees, error: empError } = await supabase
+        const { data: employees = [], error: empError } = await supabase
           .from('profiles')
           .select('base_salary')
           .gt('base_salary', 0);
         
-        if (!empError && employees && employees.length > 0) {
+        if (!empError && employees?.length > 0) {
           const totalSalary = employees.reduce((sum, emp) => sum + (emp.base_salary || 0), 0);
           payroll = {
             totalPayroll: totalSalary,
             averageSalary: totalSalary / employees.length,
             employeesWithSalary: employees.length
           };
+        } else if (empError) {
+          console.error('Error fetching payroll data:', empError);
         }
       }
 
       // 5. Shift History - Last 15 attendance logs with employee info
       if (userRole === 'supervisor' || userRole === 'gerente') {
-        const { data: logs, error: logsError } = await supabase
+        const { data: logs = [], error: logsError } = await supabase
           .from('attendance_logs')
           .select('id, user_id, state, created_at')
           .order('created_at', { ascending: false })
           .limit(15);
         
-        if (!logsError && logs) {
+        if (!logsError && logs?.length > 0) {
           // Fetch employee names for these logs
           const userIds = [...new Set(logs.map(log => log.user_id))];
-          const { data: profiles } = await supabase
+          const { data: profiles = [], error: profileError } = await supabase
             .from('profiles')
             .select('id, full_name')
             .in('id', userIds);
           
-          const profileMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
-          
-          const logsWithNames = logs.map(log => ({
-            ...log,
-            employee_name: profileMap.get(log.user_id) || 'Desconocido'
-          }));
-          
-          setShiftHistory(logsWithNames);
+          if (!profileError && profiles?.length > 0) {
+            const profileMap = new Map(profiles.map(p => [p.id, p.full_name]));
+            
+            const logsWithNames = logs.map(log => ({
+              ...log,
+              employee_name: profileMap.get(log.user_id) || 'Desconocido'
+            }));
+            
+            setShiftHistory(logsWithNames);
+          } else {
+            setShiftHistory(logs.map(log => ({
+              ...log,
+              employee_name: 'Desconocido'
+            })));
+          }
+        } else if (logsError) {
+          console.error('Error fetching shift history:', logsError);
+          setShiftHistory([]);
         }
       }
 
       setStats({
         totalEmployees: empCount || 0,
         activeNow: activeCount || 0,
-        pendingRequests: reqCount || 0
+        pendingRequests: reqs?.length || 0
       });
       setPayrollStats(payroll);
-      
-      if (reqs) setRequests(reqs);
+      setRequests(reqs || []);
       
     } catch (error) {
       console.error("Error loading dashboard", error);
@@ -241,22 +252,22 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
             Historial de Turnos Recientes
           </h3>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {shiftHistory.length === 0 ? (
+            {!shiftHistory || shiftHistory.length === 0 ? (
               <p className="text-sm text-gray-400">No hay registros de turnos.</p>
             ) : (
               shiftHistory.map((log) => (
                 <div key={log.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${getStateColor(log.state)}`}></div>
+                    <div className={`w-2 h-2 rounded-full ${getStateColor(log.state || 'offline')}`}></div>
                     <div>
-                      <p className="font-bold text-sm text-gray-700 dark:text-gray-200">{log.employee_name}</p>
+                      <p className="font-bold text-sm text-gray-700 dark:text-gray-200">{log.employee_name || 'Desconocido'}</p>
                       <p className="text-xs text-gray-400">
-                        {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: es })}
+                        {log.created_at ? format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: es }) : 'Fecha desconocida'}
                       </p>
                     </div>
                   </div>
                   <span className="px-2 py-1 bg-blue-100 text-blue-700 text-[10px] font-bold uppercase rounded">
-                    {getStateLabel(log.state)}
+                    {getStateLabel(log.state || 'offline')}
                   </span>
                 </div>
               ))
@@ -274,17 +285,17 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
             Solicitudes Pendientes
           </h3>
           <div className="space-y-3">
-            {requests.length === 0 ? (
+            {!requests || requests.length === 0 ? (
               <p className="text-sm text-gray-400">No hay solicitudes pendientes.</p>
             ) : (
               requests.map((req) => (
                 <div key={req.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
                   <div>
-                    <p className="font-bold text-sm text-gray-700 dark:text-gray-200 capitalize">{req.type}</p>
-                    <p className="text-xs text-gray-400">ID Usuario: {req.user_id.substring(0,8)}...</p>
+                    <p className="font-bold text-sm text-gray-700 dark:text-gray-200 capitalize">{req.type || 'novedad'}</p>
+                    <p className="text-xs text-gray-400">ID Usuario: {req.user_id?.substring(0,8) || 'desconocido'}...</p>
                   </div>
                   <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-[10px] font-bold uppercase rounded">
-                    {req.status}
+                    {req.status || 'pendiente'}
                   </span>
                 </div>
               ))
