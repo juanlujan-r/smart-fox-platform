@@ -5,10 +5,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // 2. Ignorar reglas de estilo (Linting) durante el build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   // 3. Opcional: Si usas imágenes externas, configúralas aquí para que no den error
   images: {
     remotePatterns: [
