@@ -83,16 +83,51 @@ export default function ApprovalsPage() {
 
   const fetchRequests = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get current user profile
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      // Fetch all requests
+      const { data: requestsData, error } = await supabase
         .from('hr_requests')
-        .select(`
-          *,
-          profiles:user_id(full_name, document_id)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRequests(data || []);
+
+      // Fetch all profiles to get user names
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, document_id, role');
+
+      // Create a map of profiles by id
+      const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+
+      // Filter and enrich requests
+      let filteredRequests = (requestsData || []).map(req => ({
+        ...req,
+        profiles: {
+          full_name: profilesMap.get(req.user_id)?.full_name || 'Sin nombre',
+          document_id: profilesMap.get(req.user_id)?.document_id || 'N/A',
+        }
+      }));
+
+      // If user is supervisor, filter out requests from other supervisors and managers
+      if (currentProfile?.role === 'supervisor') {
+        filteredRequests = filteredRequests.filter(req => {
+          const reqUserRole = profilesMap.get(req.user_id)?.role;
+          return reqUserRole === 'empleado';
+        });
+      }
+      // If user is manager, they see all requests
+
+      setRequests(filteredRequests);
     } catch (error: any) {
       console.error('Error fetching requests:', error);
       pushToast('Error al cargar solicitudes', 'error');
