@@ -1,0 +1,7 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "npx supabase": true,
+        "Move-Item": true,
+        "git add": true
+    }
+}
