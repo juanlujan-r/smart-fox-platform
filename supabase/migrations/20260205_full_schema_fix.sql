@@ -292,21 +292,23 @@ CREATE INDEX IF NOT EXISTS idx_payroll_runs_status ON public.payroll_runs(status
 -- 8. STORAGE CONFIGURATION
 -- ============================================================================
 
+-- Create bucket if it doesn't exist
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('hr-attachments', 'hr-attachments', true)
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
+-- Storage policies
 DROP POLICY IF EXISTS "Authenticated users upload files" ON storage.objects;
 CREATE POLICY "Authenticated users upload files" ON storage.objects
-FOR INSERT TO authenticated WITH CHECK (bucket_id = 'hr-attachments');
+FOR INSERT TO authenticated WITH CHECK (
+  bucket_id = 'hr-attachments'
+);
 
-DROP POLICY IF EXISTS "Authenticated users view own files" ON storage.objects;
-CREATE POLICY "Authenticated users view own files" ON storage.objects
-FOR SELECT TO authenticated USING (bucket_id = 'hr-attachments');
-
-DROP POLICY IF EXISTS "Admins view all files" ON storage.objects;
-CREATE POLICY "Admins view all files" ON storage.objects
-FOR SELECT TO authenticated USING (bucket_id = 'hr-attachments');
+DROP POLICY IF EXISTS "Authenticated users view files" ON storage.objects;
+CREATE POLICY "Authenticated users view files" ON storage.objects
+FOR SELECT TO authenticated USING (
+  bucket_id = 'hr-attachments'
+);
 
 -- ============================================================================
 -- 9. AUTOMATION - NEW USER TRIGGER

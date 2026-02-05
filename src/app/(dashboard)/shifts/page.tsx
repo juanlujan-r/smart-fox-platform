@@ -539,7 +539,7 @@ export default function MisTurnosPage() {
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
