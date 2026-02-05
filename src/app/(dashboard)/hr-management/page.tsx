@@ -21,6 +21,8 @@ import {
 import type { AttendanceLogRow, HrRequestRow, ScheduleRow } from '@/types/database';
 import type { PersonalData } from '@/types/database';
 import ScheduleManager from '../hr/ScheduleManager';
+import SalaryManager from '@/components/hr/SalaryManager';
+import PayrollGenerator from '@/components/hr/PayrollGenerator';
 
 const BUCKET = 'hr-attachments';
 
@@ -502,6 +504,23 @@ export default function GestionEquipoPage() {
         )}
       </section>
       </>
+      )}
+
+      {/* Financial Management Section - Gerentes Only */}
+      {activeTab === 'equipo' && userRole === 'gerente' && (
+        <>
+          <hr className="my-8 border-gray-200" />
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <span className="text-[#FF8C00]">💰</span> Nómina y Salarios
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">Gestión financiera del equipo</p>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <SalaryManager />
+            <PayrollGenerator />
+          </div>
+        </>
       )}
     </div>
   );
