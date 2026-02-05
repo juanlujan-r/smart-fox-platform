@@ -17,13 +17,21 @@ CREATE INDEX IF NOT EXISTS idx_hr_requests_created ON hr_requests(created_at DES
 
 ALTER TABLE hr_requests ENABLE ROW LEVEL SECURITY;
 
+-- Policy 1: Users can read their own requests
 DROP POLICY IF EXISTS "Users can read own hr_requests" ON hr_requests;
 CREATE POLICY "Users can read own hr_requests" ON hr_requests
   FOR SELECT USING (auth.uid() = user_id);
 
+-- Policy 2: Users can insert their own requests (critical for "Reportar/Solicitar")
 DROP POLICY IF EXISTS "Users can insert own hr_requests" ON hr_requests;
 CREATE POLICY "Users can insert own hr_requests" ON hr_requests
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Policy 3: Users can update their own requests (before supervisor approval)
+DROP POLICY IF EXISTS "Users can update own hr_requests" ON hr_requests;
+CREATE POLICY "Users can update own hr_requests" ON hr_requests
+  FOR UPDATE USING (auth.uid() = user_id);
+
 
 -- Storage bucket for HR attachments (PDF/Images)
 INSERT INTO storage.buckets (id, name, public)

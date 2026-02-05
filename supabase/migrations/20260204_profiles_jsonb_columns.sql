@@ -18,15 +18,17 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS sizes_data JSONB DEFAULT '{}';
 -- RLS: users can read and update their own profile
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
+-- Policy 1: Users can read their own profile (auth check, no recursion)
 DROP POLICY IF EXISTS "Users can read own profile" ON profiles;
 CREATE POLICY "Users can read own profile" ON profiles
   FOR SELECT USING (auth.uid() = id);
 
+-- Policy 2: Users can update their own profile (auth check, no recursion)
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles
   FOR UPDATE USING (auth.uid() = id);
 
--- Allow insert on signup (e.g. from trigger) - optional
+-- Policy 3: Allow insert on signup (e.g. from trigger)
 DROP POLICY IF EXISTS "Users can insert own profile" ON profiles;
 CREATE POLICY "Users can insert own profile" ON profiles
   FOR INSERT WITH CHECK (auth.uid() = id);

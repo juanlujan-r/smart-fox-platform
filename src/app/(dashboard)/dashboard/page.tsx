@@ -9,6 +9,7 @@ import ManagerDashboard from '@/components/dashboard/ManagerDashboard';
 
 export default function Dashboard() {
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [employeeName, setEmployeeName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [sessionVerified, setSessionVerified] = useState(false);
   const [workHours, setWorkHours] = useState(0);
@@ -45,9 +46,18 @@ export default function Dashboard() {
         // Attempt to fetch user profile
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, personal_data')
           .eq('id', user.id)
           .single();
+
+        // Extract name from profile or auth metadata
+        const fullName = profile?.personal_data?.fullName || 
+                        user.user_metadata?.full_name || 
+                        user.user_metadata?.name || 
+                        user.email?.split('@')[0] || 
+                        'Usuario';
+        
+        setEmployeeName(fullName);
 
         // Handle profile fetch error
         if (error) {
@@ -231,8 +241,12 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <header className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">Mi Dashboard</h1>
-          <p className="text-gray-600 mt-2">{currentDate}</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900">¡Hola, {employeeName}!</h1>
+              <p className="text-gray-600 mt-2">{currentDate}</p>
+            </div>
+          </div>
         </header>
 
         {/* Shift Control (session verified only) */}

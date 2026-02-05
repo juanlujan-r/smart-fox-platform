@@ -1,13 +1,12 @@
 "use client";
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Box, Calendar, FileText, UserCircle, Users, BarChart3, ShoppingBag, LayoutDashboard, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Box, Calendar, FileText, UserCircle, Users, BarChart3, LayoutDashboard, LogOut } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Sidebar() {
   const [userRole, setUserRole] = useState('empleado');
-  const [showShop, setShowShop] = useState(false); // Módulo extra desactivado por defecto
   const router = useRouter();
 
   useEffect(() => {
@@ -21,58 +20,46 @@ export default function Sidebar() {
     fetchProfile();
   }, []);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
+
   const menu = [
     { name: 'Panel Principal', icon: LayoutDashboard, path: '/dashboard', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Mis Turnos', icon: Calendar, path: '/shifts', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Reportar/Solicitar', icon: FileText, path: '/requests', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Mi Información', icon: UserCircle, path: '/profile', roles: ['empleado', 'supervisor', 'gerente'] },
-    // Vistas de Gestión
-    { name: 'Vista RRHH', icon: Users, path: '/hr-management', roles: ['supervisor', 'gerente'] },
-    { name: 'Gerencia', icon: BarChart3, path: '/admin', roles: ['gerente'] },
+    { name: 'Gestión RRHH', icon: Users, path: '/hr-management', roles: ['supervisor', 'gerente'] },
+    { name: 'Dashboard Gerencial', icon: BarChart3, path: '/admin', roles: ['gerente'] },
   ];
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error during logout:', error.message);
-      return;
-    }
-    router.push('/login');
-  };
-
   return (
-    <aside className="w-64 bg-[#1a202c] h-screen flex flex-col p-4">
-      <div className="flex items-center gap-3 mb-10 px-2">
-        <Box className="text-[#FF8C00] w-8 h-8" />
-        <span className="text-white font-black tracking-tighter">SMART FOX SOLUTIONS</span>
+    <aside className="w-64 bg-[#1a202c] h-screen flex flex-col p-4 border-r border-gray-800 sticky top-0">
+      <div className="flex items-center gap-3 mb-10 px-2 pt-2">
+        <div className="bg-[#FF8C00] p-1.5 rounded-lg">
+          <Box className="text-white w-6 h-6" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-white font-black leading-none text-lg">SMART FOX</span>
+          <span className="text-[#FF8C00] text-[9px] font-bold tracking-[0.2em]">ERP SOLUTIONS</span>
+        </div>
       </div>
 
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-1">
         {menu.filter(item => item.roles.includes(userRole)).map((item) => (
-          <Link key={item.path} href={item.path} className="flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl transition-all font-bold text-sm">
-            <item.icon className="w-5 h-5" /> {item.name}
+          <Link key={item.path} href={item.path} className="flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl transition-all font-semibold text-sm group">
+            <item.icon className="w-5 h-5 group-hover:text-[#FF8C00] transition-colors" /> 
+            {item.name}
           </Link>
         ))}
-
-        {/* MÓDULO EXTRA: Solo visible si está activo */}
-        {showShop && (
-          <div className="pt-4 mt-4 border-t border-gray-800">
-            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest px-3 mb-2">Módulos Extra</p>
-            <Link href="/pos" className="flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-800 rounded-xl">
-              <ShoppingBag className="w-5 h-5" /> Tienda / POS
-            </Link>
-          </div>
-        )}
       </nav>
 
-      <div className="pt-4 mt-4 border-t border-gray-800">
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="w-full flex items-center gap-3 p-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-xl transition-all font-bold text-sm"
-          aria-label="Cerrar sesión"
-        >
-          <LogOut className="w-5 h-5" /> Cerrar sesión
+      <div className="pt-4 border-t border-gray-800">
+        <button onClick={handleLogout} className="flex items-center gap-3 p-3 w-full text-red-400 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-all font-bold text-sm group">
+          <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" /> 
+          Cerrar Sesión
         </button>
       </div>
     </aside>
