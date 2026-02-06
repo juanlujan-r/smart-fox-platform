@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import RoleGuard from '@/components/RoleGuard';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -43,7 +44,7 @@ const STATUS_CONFIG = {
   'retirado': { label: 'Retirado', color: 'gray', icon: AlertCircle },
 };
 
-export default function ApprovalsPage() {
+function ApprovalsPageContent() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [requests, setRequests] = useState<Request[]>([]);
@@ -420,5 +421,13 @@ export default function ApprovalsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ApprovalsPage() {
+  return (
+    <RoleGuard allowedRoles={['supervisor', 'gerente']}>
+      <ApprovalsPageContent />
+    </RoleGuard>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import RoleGuard from '@/components/RoleGuard';
 import { useToast } from '@/context/ToastContext';
 import { format, parseISO, isBefore, addMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -78,7 +79,7 @@ function getStateIcon(state: string) {
   return Power;
 }
 
-export default function GestionEquipoPage() {
+function GestionEquipoPageContent() {
   const { pushToast } = useToast();
   const [profiles, setProfiles] = useState<ProfileWithRole[]>([]);
   const [logs, setLogs] = useState<AttendanceLogRow[]>([]);
@@ -595,5 +596,13 @@ export default function GestionEquipoPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function GestionEquipoPage() {
+  return (
+    <RoleGuard allowedRoles={['supervisor', 'gerente']}>
+      <GestionEquipoPageContent />
+    </RoleGuard>
   );
 }

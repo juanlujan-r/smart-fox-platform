@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/types/database';
+import RoleGuard from '@/components/RoleGuard';
 
-export default function InventoryPage() {
+function InventoryPageContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -118,5 +119,13 @@ export default function InventoryPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function InventoryPage() {
+  return (
+    <RoleGuard allowedRoles={['gerente']}>
+      <InventoryPageContent />
+    </RoleGuard>
   );
 }

@@ -5,8 +5,9 @@ import ProductCard from '@/components/pos/ProductCard';
 import OrderSummary from './OrderSummary';
 import { Product } from '@/types/database';
 import { supabase } from '@/lib/supabase';
+import RoleGuard from '@/components/RoleGuard';
 
-export default function POSPage() {
+function POSPageContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,5 +63,13 @@ export default function POSPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function POSPage() {
+  return (
+    <RoleGuard allowedRoles={['gerente']}>
+      <POSPageContent />
+    </RoleGuard>
   );
 }

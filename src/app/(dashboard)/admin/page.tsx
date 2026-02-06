@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import ManagerDashboard from '@/components/dashboard/ManagerDashboard';
+import RoleGuard from '@/components/RoleGuard';
 
-export default function AdminPage() {
+function AdminPageContent() {
   const [userRole, setUserRole] = useState<string>('gerente');
   const [loading, setLoading] = useState(true);
 
@@ -49,4 +50,12 @@ export default function AdminPage() {
   }
 
   return <ManagerDashboard userRole={userRole} />;
+}
+
+export default function AdminPage() {
+  return (
+    <RoleGuard allowedRoles={['gerente']}>
+      <AdminPageContent />
+    </RoleGuard>
+  );
 }

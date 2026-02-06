@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Users, UserPlus, Phone, Briefcase } from 'lucide-react';
 import ShiftControl from '@/components/hr/ShiftControl';
+import RoleGuard from '@/components/RoleGuard';
 
-export default function RRHHPage() {
+function RRHHPageContent() {
   const [employees, setEmployees] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -79,5 +80,13 @@ export default function RRHHPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function RRHHPage() {
+  return (
+    <RoleGuard allowedRoles={['supervisor', 'gerente']}>
+      <RRHHPageContent />
+    </RoleGuard>
   );
 }
