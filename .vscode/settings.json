@@ -4,6 +4,8 @@
         "Move-Item": true,
         "git add": true,
         "git commit": true,
-        "supabase": true
+        "supabase": true,
+        "SELECT": true,
+        "EOF": true
     }
 }
