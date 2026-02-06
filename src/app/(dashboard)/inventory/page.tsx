@@ -82,6 +82,7 @@ export default function InventoryPage() {
                   <td className="py-3 px-4">
                     <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
                       {product.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={product.image_url}
                           alt={product.name}

@@ -47,7 +47,6 @@ export default function ApprovalsPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [requests, setRequests] = useState<Request[]>([]);
-  const [userRole, setUserRole] = useState('empleado');
   const [activeTab, setActiveTab] = useState<'pendiente' | 'aprobado' | 'rechazado' | 'retirado'>('pendiente');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState<{ [key: string]: string }>({});
@@ -128,7 +127,7 @@ export default function ApprovalsPage() {
       // If user is manager, they see all requests
 
       setRequests(filteredRequests);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching requests:', error);
       pushToast('Error al cargar solicitudes', 'error');
     } finally {
@@ -147,7 +146,7 @@ export default function ApprovalsPage() {
       if (error) throw error;
       pushToast('Solicitud aprobada correctamente', 'success');
       await fetchRequests();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error approving request:', error);
       pushToast('Error al aprobar solicitud', 'error');
     } finally {
@@ -172,7 +171,7 @@ export default function ApprovalsPage() {
       pushToast('Solicitud rechazada correctamente', 'success');
       setRejectionReason({ ...rejectionReason, [requestId]: '' });
       await fetchRequests();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error rejecting request:', error);
       pushToast('Error al rechazar solicitud', 'error');
     } finally {
@@ -191,7 +190,7 @@ export default function ApprovalsPage() {
       if (error) throw error;
       pushToast('Solicitud retirada correctamente', 'success');
       await fetchRequests();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error withdrawing request:', error);
       pushToast('Error al retirar solicitud', 'error');
     } finally {
@@ -215,7 +214,7 @@ export default function ApprovalsPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error downloading file:', error);
       pushToast('Error al descargar archivo', 'error');
     }

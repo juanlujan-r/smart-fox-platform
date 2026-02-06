@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -43,8 +43,9 @@ export default function LoginPage() {
         router.refresh(); 
         router.push('/dashboard');
       }
-    } catch (err: any) {
-      setError(err.message === 'Invalid login credentials' 
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error desconocido';
+      setError(message === 'Invalid login credentials' 
         ? 'Correo o contraseña incorrectos' 
         : 'Error de conexión con el servidor');
     } finally {
@@ -83,16 +84,13 @@ export default function LoginPage() {
             <label className="text-xs font-bold text-gray-400 uppercase tracking-widest ml-1">Usuario (Correo Corporativo)</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium pointer-events-none">
-                @smartfox.com
-              </div>
               <input
-                type="text"
+                type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value.split('@')[0])}
-                className="w-full pl-12 pr-32 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF8C00] focus:bg-white transition-all text-gray-800"
-                placeholder="usuario"
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FF8C00] focus:bg-white transition-all text-gray-800"
+                placeholder="usuario@smartfox.com"
               />
             </div>
           </div>

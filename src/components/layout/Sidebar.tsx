@@ -1,14 +1,12 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
 import { Calendar, FileText, UserCircle, Users, BarChart3, LayoutDashboard, LogOut, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Sidebar() {
   const [userRole, setUserRole] = useState('empleado');
-  const router = useRouter();
 
   useEffect(() => {
     const fetchProfile = async () => {

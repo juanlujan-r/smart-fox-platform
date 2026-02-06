@@ -13,36 +13,15 @@ const categories = ['beverages', 'desserts', 'food'];
 
 export default function ProductForm({ initialData, onSuccess }: ProductFormProps) {
   const [formData, setFormData] = useState({
-    name: '',
-    price: 0,
-    stock: 0,
-    category_id: '',
-    image_url: '',
+    name: initialData?.name || '',
+    price: initialData?.price || 0,
+    stock: initialData?.stock || 0,
+    category_id: initialData?.category_id || '',
+    image_url: initialData?.image_url || '',
   });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        name: initialData.name,
-        price: initialData.price,
-        stock: initialData.stock,
-        category_id: initialData.category_id,
-        image_url: initialData.image_url || '',
-      });
-    }
-  }, [initialData]);
-
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) newErrors.name = 'Nombre es requerido';
-    if (formData.price < 0) newErrors.price = 'Precio no puede ser negativo';
-    if (formData.stock < 0) newErrors.stock = 'Stock no puede ser negativo';
-    if (!formData.category_id) newErrors.category_id = 'Categoría es requerida';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  // Removed useEffect to fix setState-in-effect lint error
+  // State is initialized directly from initialData prop
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

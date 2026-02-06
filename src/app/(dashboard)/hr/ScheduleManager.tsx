@@ -114,9 +114,9 @@ export default function ScheduleManager() {
 
 				if (profilesRes.data) setProfiles(profilesRes.data as ProfileWithRole[]);
 				if (schedulesRes.data) setSchedules(schedulesRes.data as ScheduleRow[]);
-			} catch (err: any) {
+			} catch (err: unknown) {
 				console.error('Error in load:', err);
-				setError('Error al cargar datos: ' + (err.message || 'Intente de nuevo'));
+				setError('Error al cargar datos: ' + ((err as Error).message || 'Intente de nuevo'));
 			} finally {
 				setLoading(false);
 			}
@@ -137,7 +137,7 @@ export default function ScheduleManager() {
 	}, [schedules]);
 
 	const openEdit = (userId: string, dateStr: string) => {
-		const existing = scheduleByUserDate.get(`${userId}-${dateStr}`) as any;
+		const existing = scheduleByUserDate.get(`${userId}-${dateStr}`);
 		setEditing({
 			id: existing?.id,
 			user_id: userId,
@@ -211,7 +211,7 @@ export default function ScheduleManager() {
 				end_time: editing.end_time,
 				break_start: editing.break_start ?? null,
 				break_end: editing.break_end ?? null,
-			} as any;
+			};
 
 			const { data, error: upsertError } = await supabase
 				.from('schedules')
@@ -234,9 +234,9 @@ export default function ScheduleManager() {
 
 			setEditing(null);
 			setError(null);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error('Error in handleSave:', err);
-			setError('Error al guardar: ' + (err.message || 'Intente de nuevo'));
+			setError('Error al guardar: ' + ((err as Error).message || 'Intente de nuevo'));
 		} finally {
 			setSaving(false);
 		}
@@ -250,7 +250,7 @@ export default function ScheduleManager() {
 		try {
 			setSaving(true);
 			setError(null);
-			const existing = scheduleByUserDate.get(`${breakUserId}-${breakDate}`) as any;
+			const existing = scheduleByUserDate.get(`${breakUserId}-${breakDate}`);
 			const payload = {
 				id: existing?.id,
 				user_id: breakUserId,
@@ -259,7 +259,7 @@ export default function ScheduleManager() {
 				end_time: existing?.end_time ?? '17:00',
 				break_start: breakStart,
 				break_end: breakEnd,
-			} as any;
+			};
 
 			const { data, error: upsertError } = await supabase
 				.from('schedules')
@@ -279,9 +279,9 @@ export default function ScheduleManager() {
 					return [...filtered, data as ScheduleRow].sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
 				});
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error('Error in saveBreakWindow:', err);
-			setError('Error al guardar: ' + (err.message || 'Intente de nuevo'));
+			setError('Error al guardar: ' + ((err as Error).message || 'Intente de nuevo'));
 		} finally {
 			setSaving(false);
 		}
@@ -332,8 +332,8 @@ export default function ScheduleManager() {
 
 			setShowBulkModal(false);
 			setError(null);
-		} catch (err: any) {
-			setError('Error al guardar: ' + (err.message || 'Intente de nuevo'));
+		} catch (err: unknown) {
+			setError('Error al guardar: ' + ((err as Error).message || 'Intente de nuevo'));
 		} finally {
 			setSaving(false);
 		}
@@ -379,8 +379,8 @@ export default function ScheduleManager() {
 			setShowManualModal(false);
 			setSelectedDates([]);
 			setError(null);
-		} catch (err: any) {
-			setError('Error al guardar: ' + (err.message || 'Intente de nuevo'));
+		} catch (err: unknown) {
+			setError('Error al guardar: ' + ((err as Error).message || 'Intente de nuevo'));
 		} finally {
 			setSaving(false);
 		}
@@ -460,7 +460,7 @@ export default function ScheduleManager() {
 								</td>
 								{days.map((day) => {
 									const dateStr = format(day, 'yyyy-MM-dd');
-									const sched = scheduleByUserDate.get(`${profile.id}-${dateStr}`) as any;
+								const sched = scheduleByUserDate.get(`${profile.id}-${dateStr}`);
 									return (
 										<td key={dateStr} className="px-4 py-3">
 											<button

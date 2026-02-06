@@ -13,7 +13,7 @@ const SHIFT_STATES = [
 
 export default function ShiftControl() {
   const [currentState, setCurrentState] = useState('offline');
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<unknown[]>([]);
   const [totalWorked, setTotalWorked] = useState('00h 00m');
   const [loading, setLoading] = useState(true);
 
@@ -134,9 +134,9 @@ export default function ShiftControl() {
 
       // Reload logs after successful insert
       await fetchDailyLogs();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error al marcar turno:', error);
-      alert(`Error al guardar: ${error.message || error.details || 'Intente de nuevo'}`);
+      alert(`Error al guardar: ${(error as Error).message || (error as { details?: string }).details || 'Intente de nuevo'}`);
     } finally {
       setLoading(false);
     }

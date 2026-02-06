@@ -2,20 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Users, Plus, UserPlus, Phone, Briefcase } from 'lucide-react';
+import { Users, UserPlus, Phone, Briefcase } from 'lucide-react';
 import ShiftControl from '@/components/hr/ShiftControl';
 
 export default function RRHHPage() {
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchEmployees = async () => {
-    const { data } = await supabase.from('employees').select('*').order('created_at', { ascending: false });
-    if (data) setEmployees(data);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchEmployees(); }, []);
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      const { data } = await supabase.from('employees').select('*').order('created_at', { ascending: false });
+      if (data) setEmployees(data);
+      setLoading(false);
+    };
+    fetchEmployees();
+  }, []);
 
   const addEmployee = async () => {
     const name = prompt("Nombre completo del empleado:");

@@ -24,6 +24,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     >
       <div className="aspect-square bg-gray-200 flex items-center justify-center">
         {product.image_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={product.image_url}
             alt={product.name}

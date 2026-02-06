@@ -5,7 +5,6 @@ import {
   User, 
   Heart, 
   Shirt, 
-  FileText, 
   Save, 
   Loader2, 
   AlertCircle,
@@ -228,9 +227,9 @@ export default function ProfilePage() {
       }
 
       pushToast('Perfil actualizado correctamente', 'success');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating profile:', error);
-      pushToast('Error al guardar perfil: ' + error.message, 'error');
+      pushToast('Error al guardar perfil: ' + (error as Error).message, 'error');
     } finally {
       setSaving(false);
     }

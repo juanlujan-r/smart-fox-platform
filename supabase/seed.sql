@@ -1,0 +1,2 @@
+-- Optional seed data placeholder.
+-- This file is intentionally empty to keep `supabase db reset` stable.

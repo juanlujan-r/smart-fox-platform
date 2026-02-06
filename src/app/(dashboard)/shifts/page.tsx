@@ -15,24 +15,22 @@ import {
   differenceInHours,
   differenceInMinutes,
   parseISO,
-  isSameDay,
   addDays,
   isToday,
   setHours,
   setMinutes,
   setSeconds,
-  parse,
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   Clock,
   Calendar,
   ArrowLeftRight,
-  LogIn,
   AlertCircle,
   ChevronLeft,
   ChevronRight,
   X,
+  LogIn,
 } from 'lucide-react';
 import type { ScheduleRow, AttendanceLogRow } from '@/types/database';
 
@@ -57,7 +55,6 @@ function timeStringToMinutes(t: string): number {
 export default function MisTurnosPage() {
   const { pushToast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AttendanceLogRow[]>([]);
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
@@ -87,17 +84,6 @@ export default function MisTurnosPage() {
           return;
         }
         setUserId(user.id);
-
-        // Fetch user role
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        
-        if (profileData?.role) {
-          setUserRole(profileData.role);
-        }
 
         const now = new Date();
         const monthAgo = subMonths(now, 1);
@@ -133,7 +119,7 @@ export default function MisTurnosPage() {
         } else {
           setSchedules((schedData ?? []) as ScheduleRow[]);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error in load:', err);
       } finally {
         setLoading(false);
@@ -238,9 +224,9 @@ export default function MisTurnosPage() {
     if (durationHours > HOURS_MAX_PER_DAY) {
       return `Máximo ${HOURS_MAX_PER_DAY} horas por día. Solicitado: ${durationHours.toFixed(1)}h.`;
     }
-    const reqDate = parseISO(exchangeRequest.requested_date + 'T12:00:00');
+    void parseISO(exchangeRequest.requested_date + 'T12:00:00');
     const reqStart = parseTimeToDate(exchangeRequest.requested_date, exchangeRequest.requested_start_time);
-    const allScheds = [...schedules];
+    void [...schedules];
     const sameDaySched = scheduleByDate[exchangeRequest.requested_date];
     if (sameDaySched) {
       const existingEnd = parseTimeToDate(sameDaySched.scheduled_date, sameDaySched.end_time);

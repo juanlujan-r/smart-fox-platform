@@ -215,7 +215,7 @@ export default function GestionEquipoPage() {
           });
           setEntradaLogsToday(Array.from(todayEntradaUserIds).map((user_id) => ({ user_id })));
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Error in load:', err);
       } finally {
         setLoading(false);

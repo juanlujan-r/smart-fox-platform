@@ -61,8 +61,8 @@ export const useCartStore = create<CartState>((set, get) => ({
 
       clearCart();
       return { success: true };
-    } catch (error: any) {
-      return { success: false, message: error.message };
+    } catch (error: unknown) {
+      return { success: false, message: (error as Error).message };
     }
   },
 }));

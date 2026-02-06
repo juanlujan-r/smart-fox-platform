@@ -1,7 +1,7 @@
 "use client";
 import { Box, Printer } from 'lucide-react';
 
-export default function CertificateTemplate({ profile }: { profile: any }) {
+export default function CertificateTemplate({ profile }: { profile: unknown }) {
   const currentDate = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
   const salaryFormatted = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(profile.base_salary || 0);
 
@@ -19,7 +19,7 @@ export default function CertificateTemplate({ profile }: { profile: any }) {
         >
             <Printer className="w-5 h-5" /> Imprimir / Guardar como PDF
         </button>
-        <p className="text-xs text-gray-400 mt-2">Usa la opción "Guardar como PDF" de tu navegador.</p>
+        <p className="text-xs text-gray-400 mt-2">Usa la opción &quot;Guardar como PDF&quot; de tu navegador.</p>
       </div>
 
       {/* DOCUMENTO OFICIAL */}

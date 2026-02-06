@@ -4,9 +4,9 @@ import { supabase } from '@/lib/supabase';
 import { DollarSign, Save, RefreshCw, X, Lock } from 'lucide-react';
 
 export default function SalaryManager() {
-  const [employees, setEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<unknown>(null);
   
   // Modal de contraseña
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -121,8 +121,8 @@ export default function SalaryManager() {
       setShowPasswordModal(false);
       setPassword('');
       setPendingUpdate(null);
-    } catch (error: any) {
-      setPasswordError('Error: ' + (error.message || 'Intenta de nuevo'));
+    } catch (error: unknown) {
+      setPasswordError('Error: ' + ((error as Error).message || 'Intenta de nuevo'));
     } finally {
       setUpdating(false);
     }

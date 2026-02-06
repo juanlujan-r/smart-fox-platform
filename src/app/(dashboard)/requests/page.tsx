@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Send, Paperclip, Loader2, FileText, CheckCircle } from 'lucide-react';
 
@@ -65,9 +65,9 @@ export default function RequestsPage() {
       setSuccess(true);
       setDetails('');
       setFile(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error enviando solicitud:", error);
-      alert(`Error: ${error.message || "No se pudo enviar la solicitud"}`);
+      alert(`Error: ${(error as Error).message || "No se pudo enviar la solicitud"}`);
     } finally {
       setLoading(false);
     }

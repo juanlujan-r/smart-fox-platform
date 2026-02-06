@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx'; // Asegúrate de tener: npm install xlsx
 export default function PayrollGenerator() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [preview, setPreview] = useState<any[]>([]);
+  const [preview, setPreview] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
 
   const generatePreview = async () => {
@@ -40,7 +40,7 @@ export default function PayrollGenerator() {
         let totalMinutes = 0;
 
         // Group logs by day to calculate daily hours
-        const logsByDay = new Map<string, any[]>();
+        const logsByDay = new Map<string, unknown[]>();
         empLogs.forEach(log => {
           const day = new Date(log.created_at).toISOString().split('T')[0];
           if (!logsByDay.has(day)) logsByDay.set(day, []);
@@ -90,9 +90,9 @@ export default function PayrollGenerator() {
       }).filter(r => r.minutes_worked > 0); // Solo mostrar si trabajaron
 
       setPreview(report || []);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      alert("Error al generar nómina: " + (e.message || "Intenta de nuevo"));
+      alert("Error al generar nómina: " + ((e as Error).message || "Intenta de nuevo"));
     } finally {
       setLoading(false);
     }

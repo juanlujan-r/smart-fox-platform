@@ -74,6 +74,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users view own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users insert own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admins view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Admins update all profiles" ON public.profiles;
+
 CREATE POLICY "Users view own profile" ON public.profiles
 FOR SELECT USING (auth.uid() = id);
 
@@ -89,9 +95,11 @@ FOR SELECT USING (public.check_is_admin());
 CREATE POLICY "Admins update all profiles" ON public.profiles
 FOR UPDATE USING (public.check_is_admin());
 
+DROP TRIGGER IF EXISTS update_minute_rate ON public.profiles;
 CREATE TRIGGER update_minute_rate BEFORE INSERT OR UPDATE ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION public.calculate_minute_rate();
 
+DROP TRIGGER IF EXISTS update_updated_at_profiles ON public.profiles;
 CREATE TRIGGER update_updated_at_profiles BEFORE UPDATE ON public.profiles
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
@@ -111,6 +119,12 @@ CREATE TABLE IF NOT EXISTS public.attendance_logs (
 );
 
 ALTER TABLE public.attendance_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users insert own logs" ON public.attendance_logs;
+DROP POLICY IF EXISTS "Users view own logs" ON public.attendance_logs;
+DROP POLICY IF EXISTS "Users update own logs" ON public.attendance_logs;
+DROP POLICY IF EXISTS "Admins view all logs" ON public.attendance_logs;
+DROP POLICY IF EXISTS "Supervisors read all logs" ON public.attendance_logs;
 
 CREATE POLICY "Users insert own logs" ON public.attendance_logs
 FOR INSERT WITH CHECK (auth.uid() = user_id);
@@ -149,6 +163,11 @@ CREATE TABLE IF NOT EXISTS public.schedules (
 
 ALTER TABLE public.schedules ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users view own schedules" ON public.schedules;
+DROP POLICY IF EXISTS "Users insert own schedules" ON public.schedules;
+DROP POLICY IF EXISTS "Admins create schedules" ON public.schedules;
+DROP POLICY IF EXISTS "Admins update all schedules" ON public.schedules;
+
 CREATE POLICY "Users view own schedules" ON public.schedules
 FOR SELECT USING (auth.uid() = user_id OR public.check_is_admin());
 
@@ -161,6 +180,7 @@ FOR INSERT WITH CHECK (public.check_is_admin());
 CREATE POLICY "Admins update all schedules" ON public.schedules
 FOR UPDATE USING (public.check_is_admin());
 
+DROP TRIGGER IF EXISTS update_updated_at_schedules ON public.schedules;
 CREATE TRIGGER update_updated_at_schedules BEFORE UPDATE ON public.schedules
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
@@ -187,6 +207,12 @@ CREATE TABLE IF NOT EXISTS public.hr_requests (
 
 ALTER TABLE public.hr_requests ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users view own requests" ON public.hr_requests;
+DROP POLICY IF EXISTS "Users insert own requests" ON public.hr_requests;
+DROP POLICY IF EXISTS "Users update own requests" ON public.hr_requests;
+DROP POLICY IF EXISTS "Admins view all requests" ON public.hr_requests;
+DROP POLICY IF EXISTS "Admins update all requests" ON public.hr_requests;
+
 CREATE POLICY "Users view own requests" ON public.hr_requests
 FOR SELECT USING (auth.uid() = user_id);
 
@@ -202,6 +228,7 @@ FOR SELECT USING (public.check_is_admin());
 CREATE POLICY "Admins update all requests" ON public.hr_requests
 FOR UPDATE USING (public.check_is_admin());
 
+DROP TRIGGER IF EXISTS update_updated_at_hr_requests ON public.hr_requests;
 CREATE TRIGGER update_updated_at_hr_requests BEFORE UPDATE ON public.hr_requests
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
@@ -228,6 +255,12 @@ CREATE TABLE IF NOT EXISTS public.shift_exchange_requests (
 
 ALTER TABLE public.shift_exchange_requests ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users view own shift requests" ON public.shift_exchange_requests;
+DROP POLICY IF EXISTS "Users insert own shift requests" ON public.shift_exchange_requests;
+DROP POLICY IF EXISTS "Users update own shift requests" ON public.shift_exchange_requests;
+DROP POLICY IF EXISTS "Admins view all shift requests" ON public.shift_exchange_requests;
+DROP POLICY IF EXISTS "Admins update all shift requests" ON public.shift_exchange_requests;
+
 CREATE POLICY "Users view own shift requests" ON public.shift_exchange_requests
 FOR SELECT USING (auth.uid() = user_id);
 
@@ -243,6 +276,7 @@ FOR SELECT USING (public.check_is_admin());
 CREATE POLICY "Admins update all shift requests" ON public.shift_exchange_requests
 FOR UPDATE USING (public.check_is_admin());
 
+DROP TRIGGER IF EXISTS update_updated_at_shift_exchange ON public.shift_exchange_requests;
 CREATE TRIGGER update_updated_at_shift_exchange BEFORE UPDATE ON public.shift_exchange_requests
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
@@ -279,6 +313,10 @@ CREATE TABLE IF NOT EXISTS public.payroll_items (
 ALTER TABLE public.payroll_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payroll_items ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Managers manage payroll" ON public.payroll_runs;
+DROP POLICY IF EXISTS "Managers manage payroll items" ON public.payroll_items;
+DROP POLICY IF EXISTS "Users view own payslips" ON public.payroll_items;
+
 CREATE POLICY "Managers manage payroll" ON public.payroll_runs
 FOR ALL USING (public.check_is_admin());
 
@@ -288,9 +326,11 @@ FOR ALL USING (public.check_is_admin());
 CREATE POLICY "Users view own payslips" ON public.payroll_items
 FOR SELECT USING (auth.uid() = user_id OR public.check_is_admin());
 
+DROP TRIGGER IF EXISTS update_updated_at_payroll_runs ON public.payroll_runs;
 CREATE TRIGGER update_updated_at_payroll_runs BEFORE UPDATE ON public.payroll_runs
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+DROP TRIGGER IF EXISTS update_updated_at_payroll_items ON public.payroll_items;
 CREATE TRIGGER update_updated_at_payroll_items BEFORE UPDATE ON public.payroll_items
 FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
@@ -318,6 +358,9 @@ CREATE INDEX IF NOT EXISTS idx_salary_audit_created_at ON public.salary_audit(cr
 
 ALTER TABLE public.salary_audit ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "salary_audit_read_policy" ON public.salary_audit;
+DROP POLICY IF EXISTS "salary_audit_insert_policy" ON public.salary_audit;
+
 CREATE POLICY "salary_audit_read_policy" ON public.salary_audit
   FOR SELECT USING (public.check_is_admin());
 
@@ -331,6 +374,9 @@ CREATE POLICY "salary_audit_insert_policy" ON public.salary_audit
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('hr-attachments', 'hr-attachments', true)
 ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "Authenticated users upload files" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users view files" ON storage.objects;
 
 CREATE POLICY "Authenticated users upload files" ON storage.objects
 FOR INSERT TO authenticated WITH CHECK (bucket_id = 'hr-attachments');
@@ -376,141 +422,19 @@ UPDATE public.profiles SET role = 'empleado' WHERE role IS NULL;
 -- 12. SEED TEST DATA
 -- ============================================================================
 
--- Create test auth users with fixed UUIDs
-WITH test_users AS (
-  SELECT * FROM (VALUES
-    ('00000000-0000-0000-0000-000000000001'::uuid, 'gerente1@smartfox.com', 'Carlos Rodríguez'),
-    ('00000000-0000-0000-0000-000000000002'::uuid, 'gerente2@smartfox.com', 'María González'),
-    ('00000000-0000-0000-0000-000000000003'::uuid, 'supervisor1@smartfox.com', 'Juan López'),
-    ('00000000-0000-0000-0000-000000000004'::uuid, 'supervisor2@smartfox.com', 'Patricia Sánchez'),
-    ('00000000-0000-0000-0000-000000000005'::uuid, 'supervisor3@smartfox.com', 'Roberto García'),
-    ('00000000-0000-0000-0000-000000000011'::uuid, 'emp1@smartfox.com', 'Ana Martínez'),
-    ('00000000-0000-0000-0000-000000000012'::uuid, 'emp2@smartfox.com', 'Diego Fernández'),
-    ('00000000-0000-0000-0000-000000000013'::uuid, 'emp3@smartfox.com', 'Laura Jiménez'),
-    ('00000000-0000-0000-0000-000000000014'::uuid, 'emp4@smartfox.com', 'Miguel Torres'),
-    ('00000000-0000-0000-0000-000000000015'::uuid, 'emp5@smartfox.com', 'Sofía Cruz'),
-    ('00000000-0000-0000-0000-000000000016'::uuid, 'emp6@smartfox.com', 'Fernando Reyes'),
-    ('00000000-0000-0000-0000-000000000017'::uuid, 'emp7@smartfox.com', 'Gabriela Mendoza'),
-    ('00000000-0000-0000-0000-000000000018'::uuid, 'emp8@smartfox.com', 'Julio Herrera'),
-    ('00000000-0000-0000-0000-000000000019'::uuid, 'emp9@smartfox.com', 'Valentina Salazar'),
-    ('00000000-0000-0000-0000-000000000020'::uuid, 'emp10@smartfox.com', 'Andrés Moreno')
-  ) AS t(id, email, full_name)
-)
-INSERT INTO auth.users (
-  instance_id,
-  id,
-  aud,
-  role,
-  email,
-  encrypted_password,
-  email_confirmed_at,
-  raw_app_meta_data,
-  raw_user_meta_data,
-  is_super_admin,
-  created_at,
-  updated_at
-)
-SELECT
-  (SELECT id FROM auth.instances LIMIT 1) AS instance_id,
-  tu.id,
-  'authenticated' AS aud,
-  'authenticated' AS role,
-  tu.email,
-  crypt('Test1234!', gen_salt('bf')),
-  now(),
-  '{"provider":"email","providers":["email"]}'::jsonb,
-  jsonb_build_object('full_name', tu.full_name),
-  false,
-  now(),
-  now()
-FROM test_users tu
-ON CONFLICT (id) DO NOTHING;
-
--- Insert test employee profiles
-INSERT INTO public.profiles (id, full_name, role, base_salary, minute_rate, document_id, personal_data)
-VALUES 
-  -- Gerentes (2)
-  ('00000000-0000-0000-0000-000000000001', 'Carlos Rodríguez', 'gerente', 5000000, 396.83, '1001001', '{"email": "gerente1@smartfox.com", "phone": "3001234567"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000002', 'María González', 'gerente', 4800000, 380.95, '1001002', '{"email": "gerente2@smartfox.com", "phone": "3001234568"}'::jsonb),
-  
-  -- Supervisores (3)
-  ('00000000-0000-0000-0000-000000000003', 'Juan López', 'supervisor', 2500000, 198.41, '1002001', '{"email": "supervisor1@smartfox.com", "phone": "3001234569"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000004', 'Patricia Sánchez', 'supervisor', 2500000, 198.41, '1002002', '{"email": "supervisor2@smartfox.com", "phone": "3001234570"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000005', 'Roberto García', 'supervisor', 2400000, 190.48, '1002003', '{"email": "supervisor3@smartfox.com", "phone": "3001234571"}'::jsonb),
-  
-  -- Empleados (10)
-  ('00000000-0000-0000-0000-000000000011', 'Ana Martínez', 'empleado', 1200000, 95.24, '1100001', '{"email": "emp1@smartfox.com", "phone": "3001234572"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000012', 'Diego Fernández', 'empleado', 1200000, 95.24, '1100002', '{"email": "emp2@smartfox.com", "phone": "3001234573"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000013', 'Laura Jiménez', 'empleado', 1250000, 99.21, '1100003', '{"email": "emp3@smartfox.com", "phone": "3001234574"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000014', 'Miguel Torres', 'empleado', 1200000, 95.24, '1100004', '{"email": "emp4@smartfox.com", "phone": "3001234575"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000015', 'Sofía Cruz', 'empleado', 1300000, 103.17, '1100005', '{"email": "emp5@smartfox.com", "phone": "3001234576"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000016', 'Fernando Reyes', 'empleado', 1200000, 95.24, '1100006', '{"email": "emp6@smartfox.com", "phone": "3001234577"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000017', 'Gabriela Mendoza', 'empleado', 1250000, 99.21, '1100007', '{"email": "emp7@smartfox.com", "phone": "3001234578"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000018', 'Julio Herrera', 'empleado', 1200000, 95.24, '1100008', '{"email": "emp8@smartfox.com", "phone": "3001234579"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000019', 'Valentina Salazar', 'empleado', 1300000, 103.17, '1100009', '{"email": "emp9@smartfox.com", "phone": "3001234580"}'::jsonb),
-  ('00000000-0000-0000-0000-000000000020', 'Andrés Moreno', 'empleado', 1200000, 95.24, '1100010', '{"email": "emp10@smartfox.com", "phone": "3001234581"}'::jsonb)
-ON CONFLICT (id) DO UPDATE SET
-  full_name = EXCLUDED.full_name,
-  role = EXCLUDED.role,
-  base_salary = EXCLUDED.base_salary,
-  minute_rate = EXCLUDED.minute_rate,
-  document_id = EXCLUDED.document_id,
-  personal_data = EXCLUDED.personal_data;
-
--- Insert attendance logs for the last 15 days (employees only)
-DO $$ 
-DECLARE
-  emp_id UUID;
-  start_date DATE := CURRENT_DATE - INTERVAL '15 days';
-  curr_date DATE := start_date;
-  emp_ids UUID[] := ARRAY[
-    '00000000-0000-0000-0000-000000000011',
-    '00000000-0000-0000-0000-000000000012',
-    '00000000-0000-0000-0000-000000000013',
-    '00000000-0000-0000-0000-000000000014',
-    '00000000-0000-0000-0000-000000000015',
-    '00000000-0000-0000-0000-000000000016',
-    '00000000-0000-0000-0000-000000000017',
-    '00000000-0000-0000-0000-000000000018',
-    '00000000-0000-0000-0000-000000000019',
-    '00000000-0000-0000-0000-000000000020'
-  ];
-  start_time TIME;
-  end_time TIME;
-BEGIN
-  WHILE curr_date <= CURRENT_DATE LOOP
-    -- Skip weekends (Saturday = 6, Sunday = 0)
-    IF EXTRACT(DOW FROM curr_date) NOT IN (0, 6) THEN
-      FOREACH emp_id IN ARRAY emp_ids LOOP
-        -- Random check-in time around 8:00 AM
-        start_time := '08:00'::TIME + (RANDOM() * INTERVAL '30 minutes');
-        
-        -- Random check-out time around 5:00 PM
-        end_time := '17:00'::TIME + ((RANDOM() - 0.5) * INTERVAL '60 minutes');
-        
-        -- Insert entrada (check-in)
-        INSERT INTO public.attendance_logs (user_id, state, created_at)
-        VALUES (
-          emp_id,
-          'entrada',
-          curr_date + start_time
-        );
-        
-        -- Insert offline (check-out)
-        INSERT INTO public.attendance_logs (user_id, state, created_at)
-        VALUES (
-          emp_id,
-          'offline',
-          curr_date + end_time
-        );
-      END LOOP;
-    END IF;
-    
-    curr_date := curr_date + INTERVAL '1 day';
-  END LOOP;
-END $$;
+-- NOTE: Users must be created via Supabase UI or Auth API
+-- To create test users, use Supabase Studio at http://127.0.0.1:54323
+-- Authentication > Users > Create new user
+-- 
+-- Test Credentials:
+-- Email: gerente1@smartfox.com | Password: Test1234! | Role: gerente
+-- Email: supervisor1@smartfox.com | Password: Test1234! | Role: supervisor
+-- Email: emp1@smartfox.com | Password: Test1234! | Role: empleado
+--
+-- Once users are created in Auth, profiles will be auto-created via trigger
 
 -- ============================================================================
 -- SCHEMA COMPLETE
 -- All test credentials: password = Test1234!
 -- ============================================================================
+

@@ -2,34 +2,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Users, AlertCircle, 
-  Calendar, CheckCircle, DollarSign, Clock, TrendingUp
+  Users, AlertCircle, CheckCircle, 
+  Calendar, DollarSign, Clock, TrendingUp
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-// Definición simple para evitar errores de TS
-interface EmployeeProfile {
-  id: string;
-  full_name: string;
-  role: string;
-  base_salary?: number;
-  minute_rate?: number;
-}
-
-interface RequestType {
-  id: number;
-  type: string;
-  status: string;
-  user_id: string;
-}
-
-interface AttendanceLog {
-  id: string;
-  user_id: string;
-  state?: string;
-  created_at: string;
-}
 
 interface PayrollStats {
   totalPayroll: number;
@@ -48,9 +25,6 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
     averageSalary: 0,
     employeesWithSalary: 0
   });
-  const [requests, setRequests] = useState<RequestType[]>([]);
-  const [shiftHistory, setShiftHistory] = useState<(AttendanceLog & { employee_name?: string })[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboardData();
@@ -59,19 +33,19 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
   const fetchDashboardData = async () => {
     try {
       // 1. Empleados
-      const { count: empCount, error: empCountError } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+      const { count: empCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
       
       // 2. Activos Ahora (Log más reciente no es offline)
       const today = new Date();
       today.setHours(0,0,0,0);
-      const { count: activeCount, error: activeError } = await supabase
+      const { count: activeCount } = await supabase
         .from('attendance_logs')
         .select('*', { count: 'exact', head: true })
         .eq('state', 'entrada')
         .gte('created_at', today.toISOString());
 
       // 3. Solicitudes Pendientes
-      const { data: reqs = [], error: reqError } = await supabase
+      const { data: reqs = [] } = await supabase
         .from('hr_requests')
         .select('id, type, status, user_id')
         .eq('status', 'pendiente');

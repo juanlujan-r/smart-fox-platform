@@ -15,13 +15,11 @@ interface Meeting {
 }
 
 interface NotificationBarProps {
-  userId: string;
   disciplinaryActions?: DisciplinaryAction[];
   meetings?: Meeting[];
 }
 
 export const NotificationBar: React.FC<NotificationBarProps> = ({
-  userId,
   disciplinaryActions = [],
   meetings = [],
 }) => {
@@ -33,43 +31,47 @@ export const NotificationBar: React.FC<NotificationBarProps> = ({
   } | null>(null);
 
   useEffect(() => {
-    // Check for active disciplinary action with hearing
-    const activeHearing = disciplinaryActions.find(
-      (action) => action.has_hearing && action.status === 'active'
-    );
-
-    if (activeHearing) {
-      setNotification({
-        type: 'danger',
-        message: '¡Atención! Tienes una citación a descargos programada',
-        icon: <AlertCircle className="w-5 h-5" />,
-      });
-      return;
-    }
-
-    // Check for mandatory meeting in next 1 hour
-    const now = new Date();
-    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-
-    const upcomingMeeting = meetings.find((meeting) => {
-      const meetingTime = new Date(meeting.start_time);
-      return (
-        meeting.is_mandatory &&
-        meetingTime >= now &&
-        meetingTime <= oneHourLater
+    const checkNotifications = () => {
+      // Check for active disciplinary action with hearing
+      const activeHearing = disciplinaryActions.find(
+        (action) => action.has_hearing && action.status === 'active'
       );
-    });
 
-    if (upcomingMeeting) {
-      setNotification({
-        type: 'warning',
-        message: `Reunión obligatoria en breve: ${upcomingMeeting.title}`,
-        icon: <Calendar className="w-5 h-5" />,
+      if (activeHearing) {
+        setNotification({
+          type: 'danger',
+          message: '¡Atención! Tienes una citación a descargos programada',
+          icon: <AlertCircle className="w-5 h-5" />,
+        });
+        return;
+      }
+
+      // Check for mandatory meeting in next 1 hour
+      const now = new Date();
+      const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+
+      const upcomingMeeting = meetings.find((meeting) => {
+        const meetingTime = new Date(meeting.start_time);
+        return (
+          meeting.is_mandatory &&
+          meetingTime >= now &&
+          meetingTime <= oneHourLater
+        );
       });
-      return;
-    }
 
-    setNotification(null);
+      if (upcomingMeeting) {
+        setNotification({
+          type: 'warning',
+          message: `Reunión obligatoria en breve: ${upcomingMeeting.title}`,
+          icon: <Calendar className="w-5 h-5" />,
+        });
+        return;
+      }
+
+      setNotification(null);
+    };
+
+    checkNotifications();
   }, [disciplinaryActions, meetings]);
 
   if (!isVisible || !notification) {

@@ -1,13 +1,12 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Store, Package, Users, LogOut } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 export default function MobileNav() {
   const pathname = usePathname();
-  const router = useRouter();
 
   const menuItems = [
     { name: 'Inicio', icon: LayoutDashboard, href: '/dashboard' },
