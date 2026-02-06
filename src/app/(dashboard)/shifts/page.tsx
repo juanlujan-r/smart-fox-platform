@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -52,9 +52,38 @@ function timeStringToMinutes(t: string): number {
   return (h ?? 0) * 60 + (m ?? 0);
 }
 
+type ScheduleFlexible = ScheduleRow & {
+  shift_start?: string | null;
+  shift_end?: string | null;
+  scheduled_date?: string | null;
+};
+
+function getScheduleDate(s: ScheduleFlexible): string | null {
+  if (s.scheduled_date) return s.scheduled_date;
+  if (s.shift_start) return format(parseISO(s.shift_start), 'yyyy-MM-dd');
+  return null;
+}
+
+function getScheduleTimes(s: ScheduleFlexible): { date: string | null; start: string | null; end: string | null } {
+  if (s.start_time && s.end_time) {
+    return { date: getScheduleDate(s), start: s.start_time, end: s.end_time };
+  }
+  if (s.shift_start && s.shift_end) {
+    const startDt = parseISO(s.shift_start);
+    const endDt = parseISO(s.shift_end);
+    return {
+      date: format(startDt, 'yyyy-MM-dd'),
+      start: format(startDt, 'HH:mm:ss'),
+      end: format(endDt, 'HH:mm:ss'),
+    };
+  }
+  return { date: getScheduleDate(s), start: null, end: null };
+}
+
 export default function MisTurnosPage() {
   const { pushToast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<'empleado' | 'supervisor' | 'gerente' | null>(null);
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AttendanceLogRow[]>([]);
   const [schedules, setSchedules] = useState<ScheduleRow[]>([]);
@@ -67,6 +96,9 @@ export default function MisTurnosPage() {
     reason: '',
   });
   const [exchangeSubmitting, setExchangeSubmitting] = useState(false);
+
+  const canViewSchedule = userRole === 'empleado' || userRole === 'supervisor' || userRole === 'gerente' || !userRole;
+  const canRequestExchange = userRole === 'empleado' || !userRole;
 
   useEffect(() => {
     const load = async () => {
@@ -84,6 +116,19 @@ export default function MisTurnosPage() {
           return;
         }
         setUserId(user.id);
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.warn('Profile not found or error:', profileError);
+          setUserRole(null);
+        } else {
+          setUserRole((profile?.role as 'empleado' | 'supervisor' | 'gerente' | null) ?? null);
+        }
 
         const now = new Date();
         const monthAgo = subMonths(now, 1);
@@ -187,7 +232,8 @@ export default function MisTurnosPage() {
   const scheduleByDate = useMemo(() => {
     const map: Record<string, ScheduleRow> = {};
     schedules.forEach((s) => {
-      map[s.scheduled_date] = s;
+      const dateKey = getScheduleDate(s as ScheduleFlexible);
+      if (dateKey) map[dateKey] = s;
     });
     return map;
   }, [schedules]);
@@ -198,9 +244,10 @@ export default function MisTurnosPage() {
       const type = getLogType(log);
       if (type !== 'entrada') return;
       const day = format(parseISO(log.created_at), 'yyyy-MM-dd');
-      const sched = scheduleByDate[day];
-      const scheduledStart = sched
-        ? parseTimeToDate(sched.scheduled_date, sched.start_time)
+      const sched = scheduleByDate[day] as ScheduleFlexible | undefined;
+      const schedTimes = sched ? getScheduleTimes(sched) : null;
+      const scheduledStart = schedTimes?.start
+        ? parseTimeToDate(day, schedTimes.start)
         : null;
       byDay[day] = {
         scheduledStart,
@@ -222,28 +269,38 @@ export default function MisTurnosPage() {
     const endM = timeStringToMinutes(exchangeRequest.requested_end_time);
     const durationHours = (endM - startM) / 60;
     if (durationHours > HOURS_MAX_PER_DAY) {
-      return `Máximo ${HOURS_MAX_PER_DAY} horas por día. Solicitado: ${durationHours.toFixed(1)}h.`;
+      return `MÃ¡ximo ${HOURS_MAX_PER_DAY} horas por dÃ­a. Solicitado: ${durationHours.toFixed(1)}h.`;
     }
-    void parseISO(exchangeRequest.requested_date + 'T12:00:00');
+
+    const reqDate = parseISO(exchangeRequest.requested_date + 'T12:00:00');
     const reqStart = parseTimeToDate(exchangeRequest.requested_date, exchangeRequest.requested_start_time);
     void [...schedules];
-    const sameDaySched = scheduleByDate[exchangeRequest.requested_date];
+
+    const sameDaySched = scheduleByDate[exchangeRequest.requested_date] as ScheduleFlexible | undefined;
     if (sameDaySched) {
-      const existingEnd = parseTimeToDate(sameDaySched.scheduled_date, sameDaySched.end_time);
-      const hoursBetween = differenceInHours(reqStart, existingEnd);
-      if (hoursBetween < MIN_HOURS_BETWEEN_SHIFTS) {
-        return `El nuevo turno debe ser al menos ${MIN_HOURS_BETWEEN_SHIFTS} horas después del anterior.`;
+      const schedTimes = getScheduleTimes(sameDaySched);
+      if (schedTimes.end) {
+        const existingEnd = parseTimeToDate(exchangeRequest.requested_date, schedTimes.end);
+        const hoursBetween = differenceInHours(reqStart, existingEnd);
+        if (hoursBetween < MIN_HOURS_BETWEEN_SHIFTS) {
+          return `El nuevo turno debe ser al menos ${MIN_HOURS_BETWEEN_SHIFTS} horas después del anterior.`;
+        }
       }
     }
+
     const prevDay = format(addDays(reqDate, -1), 'yyyy-MM-dd');
-    const prevSched = scheduleByDate[prevDay];
+    const prevSched = scheduleByDate[prevDay] as ScheduleFlexible | undefined;
     if (prevSched) {
-      const prevEnd = parseTimeToDate(prevSched.scheduled_date, prevSched.end_time);
-      const hoursBetween = differenceInHours(reqStart, prevEnd);
-      if (hoursBetween < MIN_HOURS_BETWEEN_SHIFTS) {
-        return `El nuevo turno debe ser al menos ${MIN_HOURS_BETWEEN_SHIFTS} horas después del turno del día anterior.`;
+      const schedTimes = getScheduleTimes(prevSched);
+      if (schedTimes.end) {
+        const prevEnd = parseTimeToDate(prevDay, schedTimes.end);
+        const hoursBetween = differenceInHours(reqStart, prevEnd);
+        if (hoursBetween < MIN_HOURS_BETWEEN_SHIFTS) {
+          return `El nuevo turno debe ser al menos ${MIN_HOURS_BETWEEN_SHIFTS} horas después del turno del día anterior.`;
+        }
       }
     }
+
     return null;
   };
 
@@ -328,15 +385,15 @@ export default function MisTurnosPage() {
               <h3 className="text-lg font-bold text-amber-900">Turnos no asignados</h3>
               <p className="text-sm text-amber-700 mt-2">
                 Como {userRole === 'gerente' ? 'Gerente' : 'Supervisor'}, no tienes turnos asignados actualmente. 
-                Contacta al Departamento de Recursos Humanos para solicitar la asignación de tus turnos.
+                Contacta al Departamento de Recursos Humanos para solicitar la asignaciÃ³n de tus turnos.
               </p>
             </div>
           </div>
         </section>
       )}
 
-      {/* Calendar View + Shift Exchange button (EMPLOYEES ONLY) */}
-      {userRole === 'empleado' || !userRole ? (
+      {/* Calendar View + Shift Exchange button */}
+      {canViewSchedule ? (
         <section className="fox-card p-6">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2 text-gray-800">
@@ -352,7 +409,7 @@ export default function MisTurnosPage() {
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <span className="text-sm font-semibold text-gray-700 min-w-[180px] text-center">
-                {format(weekDays[0], 'd MMM', { locale: es })} – {format(weekDays[6], 'd MMM yyyy', { locale: es })}
+                {format(weekDays[0], 'd MMM', { locale: es })} â€“ {format(weekDays[6], 'd MMM yyyy', { locale: es })}
               </span>
               <button
                 type="button"
@@ -361,21 +418,24 @@ export default function MisTurnosPage() {
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
+              {canRequestExchange && (
               <button
                 type="button"
                 onClick={() => setShowExchangeModal(true)}
                 className="ml-4 flex items-center gap-2 bg-[#FF8C00] text-white px-4 py-2.5 rounded-2xl font-bold shadow-md shadow-[#FF8C00]/25 hover:bg-[#e67d00] transition-all"
-            >
-              <ArrowLeftRight className="w-4 h-4" />
-              Solicitar Cambio de Turno
-            </button>
+              >
+                <ArrowLeftRight className="w-4 h-4" />
+                Solicitar Cambio de Turno
+              </button>
+              )}
           </div>
         </div>
         <div className="grid grid-cols-7 gap-2">
           {weekDays.map((day) => {
             const dateStr = format(day, 'yyyy-MM-dd');
-            const sched = scheduleByDate[dateStr];
+            const sched = scheduleByDate[dateStr] as ScheduleFlexible | undefined;
             const isCurrentDay = isToday(day);
+            const schedTimes = sched ? getScheduleTimes(sched) : null;
             return (
               <div
                 key={dateStr}
@@ -391,9 +451,9 @@ export default function MisTurnosPage() {
                 <p className={`text-lg font-black ${isCurrentDay ? 'text-[#FF8C00]' : 'text-gray-800'}`}>
                   {format(day, 'd')}
                 </p>
-                {sched ? (
+                {sched && schedTimes?.start && schedTimes?.end ? (
                   <div className="mt-2 text-xs text-gray-600">
-                    <p>{sched.start_time.slice(0, 5)} – {sched.end_time.slice(0, 5)}</p>
+                    <p>{schedTimes.start.slice(0, 5)} â€“ {schedTimes.end.slice(0, 5)}</p>
                   </div>
                 ) : (
                   <p className="mt-2 text-xs text-gray-400">Sin turno</p>
@@ -405,15 +465,15 @@ export default function MisTurnosPage() {
       </section>
     ) : null}
 
-      {/* Check-in vs Schedule (late highlight) - EMPLOYEES ONLY */}
-      {userRole === 'empleado' || !userRole ? (
+      {/* Check-in vs Schedule (late highlight) */}
+      {canViewSchedule ? (
       <section className="fox-card p-6">
         <div className="flex items-center gap-2 text-gray-800 mb-4">
           <LogIn className="w-5 h-5 text-[#FF8C00]" />
           <h2 className="text-lg font-bold">Entradas vs Horario</h2>
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          Comparación de tu hora de entrada registrada con el turno programado. Entradas tardías en rojo.
+          ComparaciÃ³n de tu hora de entrada registrada con el turno programado. Entradas tardÃ­as en rojo.
         </p>
         <div className="space-y-2">
           {checkInRecords.length === 0 ? (
@@ -431,7 +491,7 @@ export default function MisTurnosPage() {
                   <span className="text-sm text-gray-600">
                     Entrada: {format(r.entradaAt, 'HH:mm')}
                     {r.scheduledStart && (
-                      <span className="text-gray-500"> · Programado: {format(r.scheduledStart, 'HH:mm')}</span>
+                      <span className="text-gray-500"> Â· Programado: {format(r.scheduledStart, 'HH:mm')}</span>
                     )}
                   </span>
                 </div>
@@ -448,8 +508,8 @@ export default function MisTurnosPage() {
       </section>
       ) : null}
 
-      {/* Shift Exchange Modal - EMPLOYEES ONLY */}
-      {(userRole === 'empleado' || !userRole) && showExchangeModal && (
+      {/* Shift Exchange Modal */}
+      {canRequestExchange && showExchangeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="fox-card max-w-md w-full p-6 shadow-xl">
             <div className="flex justify-between items-center mb-4">
@@ -463,7 +523,7 @@ export default function MisTurnosPage() {
               </button>
             </div>
             <p className="text-xs text-gray-500 mb-4">
-              Máximo 10 h por día. El nuevo turno debe ser al menos 10 h después del anterior.
+              MÃ¡ximo 10 h por dÃ­a. El nuevo turno debe ser al menos 10 h despuÃ©s del anterior.
             </p>
             <div className="space-y-4">
               <label className="block">
@@ -502,7 +562,7 @@ export default function MisTurnosPage() {
                   onChange={(e) => setExchangeRequest((r) => ({ ...r, reason: e.target.value }))}
                   rows={2}
                   className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none resize-none"
-                  placeholder="Ej. Cita médica"
+                  placeholder="Ej. Cita mÃ©dica"
                 />
               </label>
             </div>
@@ -520,7 +580,7 @@ export default function MisTurnosPage() {
                 disabled={exchangeSubmitting}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#FF8C00] text-white font-bold hover:bg-[#e67d00] disabled:opacity-70"
               >
-                {exchangeSubmitting ? 'Enviando…' : 'Enviar solicitud'}
+                {exchangeSubmitting ? 'Enviandoâ€¦' : 'Enviar solicitud'}
               </button>
             </div>
           </div>

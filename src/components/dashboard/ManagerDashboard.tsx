@@ -14,12 +14,30 @@ interface PayrollStats {
   employeesWithSalary: number;
 }
 
+interface ShiftHistoryLog {
+  id: string;
+  user_id: string;
+  state?: string | null;
+  created_at?: string | null;
+  employee_name?: string | null;
+}
+
+interface HrRequest {
+  id: string;
+  type?: string | null;
+  status?: string | null;
+  user_id?: string | null;
+}
+
 export default function ManagerDashboard({ userRole }: { userRole: string }) {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalEmployees: 0,
     activeNow: 0,
     pendingRequests: 0
   });
+  const [shiftHistory, setShiftHistory] = useState<ShiftHistoryLog[]>([]);
+  const [requests, setRequests] = useState<HrRequest[]>([]);
   const [payrollStats, setPayrollStats] = useState<PayrollStats>({
     totalPayroll: 0,
     averageSalary: 0,
@@ -126,6 +144,14 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[40vh]">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#FF8C00] border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
