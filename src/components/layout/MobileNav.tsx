@@ -30,7 +30,10 @@ export default function MobileNav() {
   };
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1a202c] border-t border-gray-800 z-50 pb-safe">
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1a202c] border-t border-gray-800 z-50"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       <div className="flex justify-around items-center h-16">
         {menuItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
