@@ -36,7 +36,7 @@ export default function TopBar() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-40">
+    <header className="h-16 bg-gray-50/50 backdrop-blur-sm border-b border-gray-200/40 flex items-center justify-between px-6 sticky top-0 z-40">
       {/* Company Info */}
       <div className="flex items-center gap-3">
         <div className="flex flex-col">

@@ -3,6 +3,7 @@
         "npx supabase": true,
         "Move-Item": true,
         "git add": true,
-        "git commit": true
+        "git commit": true,
+        "supabase": true
     }
 }
