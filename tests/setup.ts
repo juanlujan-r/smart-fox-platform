@@ -2,6 +2,10 @@
  * Jest Setup - Configuración global para tests
  */
 
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
+
 // Extender matchers de Jest
 expect.extend({
   toBeCloseTo(received: number, expected: number, precision: number = 2) {
