@@ -9,10 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-    process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+export const runtime = 'nodejs';
 
 // Mapping de dígitos a colas
 const DIGIT_TO_QUEUE: Record<string, string> = {
@@ -29,6 +26,18 @@ const QUEUE_MESSAGES: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
     try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+        if (!supabaseUrl || !serviceRoleKey) {
+            console.error('Missing Supabase server credentials for ivr-input webhook.');
+            return NextResponse.json(
+                { error: 'Server misconfigured' },
+                { status: 500 }
+            );
+        }
+
+        const supabase = createClient(supabaseUrl, serviceRoleKey);
         const formData = await request.formData();
 
         const digits = formData.get('Digits') as string;
