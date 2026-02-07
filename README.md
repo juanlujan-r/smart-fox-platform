@@ -51,6 +51,7 @@ Abre [http://localhost:3000](http://localhost:3000)
 ✅ **Gestión de RH** - Asistencia, Horarios, Solicitudes, Nómina  
 ✅ **Sistema de Inventario** - Gestión de productos y stock  
 ✅ **Punto de Venta (POS)** - Órdenes de compra  
+✅ **Centro de Llamadas (Call Center)** - IVR, CRM, grabación de llamadas (NEW!)  
 ✅ **Dashboard en Tiempo Real** - KPIs y análisis del equipo  
 ✅ **Row-Level Security** - Seguridad a nivel de BD  
 ✅ **TypeScript** - Seguridad de tipos completa  
@@ -104,6 +105,27 @@ smart-fox-platform/
 ├── public/                     # Archivos estáticos
 └── package.json                # Dependencias
 ```
+
+---
+
+## 🆕 Centro de Llamadas (Call Center) - NEW!
+
+Sistema profesional de call center integrado con:
+
+- **☎️ Llamadas Entrantes y Salientes** con Twilio
+- **🎙️ IVR (Respuesta Interactiva de Voz)** configurable
+- **📇 CRM integrado** para gestión de contactos
+- **🎙️ Grabación automática** de llamadas
+- **📊 Dashboard supervisor** en tiempo real
+- **🎧 Panel de agente** para recibir/hacer llamadas
+
+**[→ DOCUMENTACIÓN CALL CENTER](./CALL_CENTER_README.md)**
+
+Para usar:
+1. Crear cuenta Twilio (gratuita)
+2. Agregar credenciales en `.env.local`
+3. Correr: `npx supabase db push`
+4. Ir a `/call-center`
 
 ---
 
