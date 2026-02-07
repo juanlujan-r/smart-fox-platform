@@ -6,9 +6,15 @@
   --background-end-rgb: 255, 255, 255;
 }
 
+html {
+  background-color: #1a202c;
+  overflow-x: hidden;
+}
+
 body {
   color: #111827;
-  background-color: #f3f4f6; 
+  background-color: #f3f4f6;
+  overflow-x: hidden;
 }
 
 @layer components {
