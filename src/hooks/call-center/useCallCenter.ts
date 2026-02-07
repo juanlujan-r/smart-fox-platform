@@ -1,14 +1,46 @@
 /**
  * CUSTOM HOOKS FOR CALL CENTER
  * useCallCenter - Main hook for managing calls and agent state
+ * 
+ * NOTA: Este hook llama a API endpoints (no usa Twilio SDK directamente)
+ * Los SDK de servidor se usan en src/app/api/twilio/
  */
 
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { AgentProfile, CallRecord, CRMContact } from '@/lib/call-center/supabase';
-import * as supabaseService from '@/lib/call-center/supabase';
-import * as twilioService from '@/lib/call-center/twilio';
+import {
+    AgentProfile,
+    CallRecord,
+    CRMContact,
+    getAgentProfile,
+    updateAgentStatus as updateAgentStatusDB,
+    createCallRecord,
+    updateCallRecord,
+    getOrCreateContact,
+    getContactCallHistory,
+    updateContact as updateContactDB,
+} from '@/lib/call-center/supabase';
+import { supabase } from '@/lib/call-center/supabase';
+
+// Simple phone formatting (doesn't need Twilio SDK)
+function formatPhoneNumber(phone: string): string {
+    // Si ya está en formato +, devuelve tal cual
+    if (phone.startsWith('+')) return phone;
+    
+    // Si es de Colombia (10 dígitos), agrega +57
+    if (phone.match(/^\d{10}$/)) {
+        return `+57${phone}`;
+    }
+    
+    // Si es formato con guiones/espacios, limpia
+    const cleaned = phone.replace(/[\s\-()]/g, '');
+    if (!cleaned.startsWith('+')) {
+        return `+57${cleaned}`;
+    }
+    
+    return cleaned;
+}
 
 export interface UseCallCenterReturn {
     // Agent
@@ -68,7 +100,7 @@ export function useCallCenter(): UseCallCenterReturn {
     useEffect(() => {
         if (!agentProfile) return;
 
-        const subscription = supabaseService.supabase
+        const subscription = supabase
             .from(`call_records:agent_id=eq.${agentProfile.id}`)
             .on('*', (payload) => {
                 console.log('Call update:', payload);
@@ -85,7 +117,7 @@ export function useCallCenter(): UseCallCenterReturn {
 
     const loadAgentProfile = async () => {
         try {
-            const profile = await supabaseService.getAgentProfile();
+            const profile = await getAgentProfile();
             setAgentProfile(profile);
             if (profile) {
                 setAgentStatus(profile.agent_status);
@@ -101,7 +133,7 @@ export function useCallCenter(): UseCallCenterReturn {
 
         try {
             setLoading(true);
-            await supabaseService.updateAgentStatus(agentProfile.id, status);
+            await updateAgentStatusDB(agentProfile.id, status);
             setAgentStatus(status);
             setSuccess(`Status updated to ${status}`);
             setTimeout(() => setSuccess(null), 3000);
@@ -124,10 +156,10 @@ export function useCallCenter(): UseCallCenterReturn {
             setError(null);
 
             // Format phone number
-            const formattedNumber = twilioService.formatPhoneNumber(phoneNumber);
+            const formattedNumber = formatPhoneNumber(phoneNumber);
 
             // Create call record in DB
-            const callrecord = await supabaseService.createCallRecord({
+            const callrecord = await createCallRecord({
                 call_id: `pending-${Date.now()}`, // Will be updated with Twilio SID
                 agent_id: agentProfile.id,
                 caller_number: formattedNumber,
@@ -139,15 +171,25 @@ export function useCallCenter(): UseCallCenterReturn {
             // Update status to busy
             await updateAgentStatus('busy');
 
-            // Initiate call with Twilio
-            const callSid = await twilioService.initiateOutboundCall({
-                toNumber: phoneNumber,
-                agentId: agentProfile.id,
-                recordingEnabled: true,
+            // Initiate call with API (server handles Twilio)
+            const response = await fetch('/api/twilio/initiate-call', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    toNumber: phoneNumber,
+                    agentId: agentProfile.id,
+                    recordingEnabled: true,
+                }),
             });
 
+            if (!response.ok) {
+                throw new Error('Failed to initiate call');
+            }
+
+            const { callSid } = await response.json();
+
             // Update call record with Twilio SID
-            await supabaseService.updateCallRecord(callrecord.call_id, {
+            await updateCallRecord(callrecord.call_id, {
                 call_id: callSid,
                 call_status: 'ringing',
                 started_at: new Date().toISOString(),
@@ -181,17 +223,21 @@ export function useCallCenter(): UseCallCenterReturn {
                 : 0;
 
             // Update call record
-            await supabaseService.updateCallRecord(currentCall.call_id, {
+            await updateCallRecord(currentCall.call_id, {
                 call_status: 'completed',
                 ended_at: new Date().toISOString(),
                 duration_seconds: duration,
             });
 
-            // Hang up with Twilio
+            // Hang up with API (server handles Twilio)
             try {
-                await twilioService.hangupCall(currentCall.call_id);
+                await fetch('/api/twilio/hangup-call', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ callSid: currentCall.call_id }),
+                });
             } catch (e) {
-                console.warn('Twilio hangup warning:', e);
+                console.warn('Hangup warning:', e);
             }
 
             // Update agent status
@@ -215,14 +261,22 @@ export function useCallCenter(): UseCallCenterReturn {
         try {
             setLoading(true);
 
-            // Transfer with Twilio
-            await twilioService.transferCall({
-                callSid: currentCall.call_id,
-                transferToNumber: toNumber,
+            // Transfer with API (server handles Twilio)
+            const response = await fetch('/api/twilio/transfer-call', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    callSid: currentCall.call_id,
+                    transferToNumber: toNumber,
+                }),
             });
 
+            if (!response.ok) {
+                throw new Error('Failed to transfer call');
+            }
+
             // Update call record
-            await supabaseService.updateCallRecord(currentCall.call_id, {
+            await updateCallRecord(currentCall.call_id, {
                 transferred: true,
                 transfer_timestamp: new Date().toISOString(),
             });
@@ -238,11 +292,11 @@ export function useCallCenter(): UseCallCenterReturn {
 
     const loadContact = useCallback(async (phoneNumber: string) => {
         try {
-            const contact = await supabaseService.getOrCreateContact(phoneNumber);
+            const contact = await getOrCreateContact(phoneNumber);
             setCurrentContact(contact);
 
             // Load contact call history
-            const history = await supabaseService.getContactCallHistory(contact.id);
+            const history = await getContactCallHistory(contact.id);
             setContactHistory(history);
         } catch (err) {
             console.error('Error loading contact:', err);
@@ -253,7 +307,7 @@ export function useCallCenter(): UseCallCenterReturn {
         if (!currentContact) return;
 
         try {
-            const updated = await supabaseService.updateContact(currentContact.id, updates);
+            const updated = await updateContactDB(currentContact.id, updates);
             setCurrentContact(updated);
             setSuccess('Contact updated');
             setTimeout(() => setSuccess(null), 3000);

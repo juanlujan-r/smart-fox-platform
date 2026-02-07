@@ -392,4 +392,5 @@ export async function getCallNotes(callRecordId: string) {
     }
 }
 
+export { supabase };
 export default supabase;

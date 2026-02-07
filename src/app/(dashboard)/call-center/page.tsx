@@ -7,7 +7,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { supabaseClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import RoleGuard from '@/components/RoleGuard';
 import { AgentPanel } from '@/components/call-center/AgentPanel';
 import { CallCenterDashboard } from '@/components/call-center/CallCenterDashboard';
@@ -28,13 +28,13 @@ export default function CallCenterPage() {
 
     const checkUserRole = async () => {
         try {
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
                 router.push('/login');
                 return;
             }
 
-            const { data: profile } = await supabaseClient
+            const { data: profile } = await supabase
                 .from('profiles')
                 .select('role')
                 .eq('id', user.id)

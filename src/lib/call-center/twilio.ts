@@ -2,14 +2,16 @@
  * TWILIO INTEGRATION SERVICE
  * Maneja todas las operaciones de Twilio para el sistema call center
  * 
+ * NOTA: Este archivo solo se usa en API routes (servidor)
+ * No importar en componentes cliente
+ * 
  * SETUP REQUERIDO:
  * 1. Crear cuenta en Twilio (https://www.twilio.com)
  * 2. Obtener: Account SID, Auth Token, Twilio Phone Number
  * 3. Crear .env.local con:
- *    NEXT_PUBLIC_TWILIO_ACCOUNT_SID=xxxxx
- *    NEXT_PUBLIC_TWILIO_AUTH_TOKEN=xxxxx
+ *    TWILIO_ACCOUNT_SID=xxxxx
+ *    TWILIO_AUTH_TOKEN=xxxxx
  *    NEXT_PUBLIC_TWILIO_PHONE_NUMBER=+xxxxx
- *    TWILIO_WEBHOOK_URL=https://yourapp.com/api/twilio
  * 4. Configurar webhooks en Twilio Console
  */
 
