@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Bell, Search, User, PhoneCall, X } from 'lucide-react';
 import Link from 'next/link';
+import { useEmployeeModal } from '@/context/EmployeeModalContext';
 
 interface Notification {
   id: string;
@@ -31,6 +32,7 @@ export default function TopBar() {
   const [showSearch, setShowSearch] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const { openModal } = useEmployeeModal();
 
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -173,15 +175,19 @@ export default function TopBar() {
             <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
               <div className="p-2">
                 {searchResults.map(result => (
-                  <Link
+                  <div
                     key={result.id}
-                    href={result.link}
-                    className="block p-3 hover:bg-gray-50 rounded-lg transition"
-                    onClick={() => setShowSearch(false)}
+                    onClick={() => {
+                      if (result.type === 'employee') {
+                        openModal(result.id, result.title, userRole);
+                        setShowSearch(false);
+                      }
+                    }}
+                    className="block p-3 hover:bg-gray-50 rounded-lg transition cursor-pointer"
                   >
                     <div className="font-semibold text-sm text-gray-900">{result.title}</div>
                     <div className="text-xs text-gray-500">{result.description}</div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </div>

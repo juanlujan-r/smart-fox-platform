@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { X, Plus, Phone, Calendar, FileText, AlertTriangle, Clock, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import { useEmployeeModal } from '@/context/EmployeeModalContext';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -24,6 +25,8 @@ interface EmployeeMetrics {
   schedules: any[];
   novedades: any[];
   attendanceLogs: any[];
+  cargo?: string;
+  supervisor_name?: string;
 }
 
 export default function EmployeeDetailModal({
@@ -32,6 +35,7 @@ export default function EmployeeDetailModal({
   onClose,
   userRole,
 }: EmployeeDetailModalProps) {
+  const { closeModal } = useEmployeeModal();
   const [metrics, setMetrics] = useState<EmployeeMetrics>({
     totalConnections: 0,
     lastConnection: null,
@@ -71,6 +75,7 @@ export default function EmployeeDetailModal({
         schedulesRes,
         novedadesRes,
         logsRes,
+        profileRes,
       ] = await Promise.all([
         supabase
           .from('call_records')
@@ -106,23 +111,44 @@ export default function EmployeeDetailModal({
           .eq('user_id', employeeId)
           .order('created_at', { ascending: false })
           .limit(50),
+        supabase
+          .from('profiles')
+          .select('cargo, supervisor_id')
+          .eq('id', employeeId)
+          .single(),
       ]);
 
       // Calcular métricas
       let totalCallTime = 0;
       let lastConnection = null;
 
-      if (callsRes.data && callsRes.data.length > 0) {
-        totalCallTime = callsRes.data.reduce(
-          (sum, record: any) => sum + (record.duration || 0),
+      if (callsRes.data && (callsRes.data as any).length > 0) {
+        totalCallTime = (callsRes.data as any).reduce(
+          (sum: number, record: any) => sum + (record.duration || 0),
           0
         );
-        lastConnection = callsRes.data[0]?.created_at;
+        lastConnection = ((callsRes.data as any)[0] as any)?.created_at || null;
       }
 
       const pendingPermissions = permissionsRes.data?.filter(
         (r: any) => r.status === 'pendiente'
       ).length || 0;
+
+      // Get supervisor name if supervisor_id exists
+      let supervisorName = '';
+      let cargo = '';
+      const profileRow = profileRes.data as any;
+      if (profileRow?.supervisor_id) {
+        const { data: supervisorData } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', profileRow.supervisor_id)
+          .single();
+        supervisorName = supervisorData?.full_name || '';
+      }
+      if (profileRow?.cargo) {
+        cargo = profileRow.cargo;
+      }
 
       setMetrics({
         totalConnections: logsRes.data?.length || 0,
@@ -134,6 +160,8 @@ export default function EmployeeDetailModal({
         schedules: schedulesRes.data || [],
         novedades: novedadesRes.data || [],
         attendanceLogs: logsRes.data || [],
+        cargo,
+        supervisor_name: supervisorName,
       });
     } catch (error) {
       console.error('Error loading metrics:', error);
@@ -154,7 +182,7 @@ export default function EmployeeDetailModal({
       setSubmitting(true);
       const { data: currentUser } = await supabase.auth.getUser();
 
-      const { error } = await supabase.from('disciplinary_actions').insert({
+      const { error } = await (supabase.from('disciplinary_actions') as any).insert({
         user_id: employeeId,
         created_by: currentUser.user?.id,
         type: formData.faultType,
@@ -203,9 +231,25 @@ export default function EmployeeDetailModal({
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{employeeName}</h2>
             <p className="text-sm text-gray-500 mt-1">ID: {employeeId.substring(0, 8)}</p>
+            {(metrics.cargo || metrics.supervisor_name) && (
+              <div className="flex gap-4 mt-2 text-sm">
+                {metrics.cargo && (
+                  <div>
+                    <span className="text-gray-500">Cargo:</span>
+                    <span className="text-gray-900 font-semibold ml-2">{metrics.cargo}</span>
+                  </div>
+                )}
+                {metrics.supervisor_name && (
+                  <div>
+                    <span className="text-gray-500">Supervisor:</span>
+                    <span className="text-gray-900 font-semibold ml-2">{metrics.supervisor_name}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <button
-            onClick={onClose}
+            onClick={closeModal}
             className="p-2 hover:bg-gray-100 rounded-lg transition"
           >
             <X className="w-6 h-6 text-gray-600" />
@@ -476,7 +520,7 @@ export default function EmployeeDetailModal({
         {/* Footer */}
         <div className="border-t border-gray-200 p-6 flex justify-end gap-2">
           <button
-            onClick={onClose}
+            onClick={closeModal}
             className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg font-bold transition"
           >
             Cerrar

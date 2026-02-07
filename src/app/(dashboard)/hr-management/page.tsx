@@ -24,7 +24,7 @@ import type { PersonalData } from '@/types/database';
 import ScheduleManager from '../hr/ScheduleManager';
 import SalaryManager from '@/components/hr/SalaryManager';
 import PayrollGenerator from '@/components/hr/PayrollGenerator';
-import EmployeeDetailModal from '@/components/hr/EmployeeDetailModal';
+import { useEmployeeModal } from '@/context/EmployeeModalContext';
 
 const BUCKET = 'hr-attachments';
 
@@ -91,8 +91,7 @@ function GestionEquipoPageContent() {
   const [nowTs, setNowTs] = useState(Date.now());
   const [activeTab, setActiveTab] = useState<'equipo' | 'horarios'>('equipo');
   const [userRole, setUserRole] = useState<string>('');
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>('');
+  const { openModal } = useEmployeeModal();
 
   const loadAttendance = async () => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -438,8 +437,7 @@ function GestionEquipoPageContent() {
               key={profile.id}
               onClick={() => {
                 if (userRole === 'supervisor' || userRole === 'gerente') {
-                  setSelectedEmployeeId(profile.id);
-                  setSelectedEmployeeName(name);
+                  openModal(profile.id, name, userRole);
                 }
               }}
               className={`rounded-2xl border border-gray-100 bg-gray-50/80 p-4 flex items-center gap-4 shadow-sm ${
@@ -609,18 +607,7 @@ function GestionEquipoPageContent() {
         </>
       )}
 
-      {/* Employee Detail Modal */}
-      {selectedEmployeeId && (
-        <EmployeeDetailModal
-          employeeId={selectedEmployeeId}
-          employeeName={selectedEmployeeName}
-          onClose={() => {
-            setSelectedEmployeeId(null);
-            setSelectedEmployeeName('');
-          }}
-          userRole={userRole}
-        />
-      )}
+      {/* Employee Detail Modal - Now rendered globally from context */}
     </div>
   );
 }
