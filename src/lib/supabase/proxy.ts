@@ -1,6 +1,35 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const PROTECTED_PREFIXES = [
+  '/dashboard',
+  '/pos',
+  '/inventory',
+  '/hr',
+  '/admin',
+  '/profile',
+  '/requests',
+  '/shifts',
+  '/call-center',
+] as const
+
+const HR_OR_ADMIN_PATHS = ['/hr-management', '/hr', '/admin'] as const
+const ADMIN_ONLY_PATHS = ['/admin'] as const
+
+type Role = 'empleado' | 'supervisor' | 'gerente'
+
+function isProtectedPath(pathname: string): boolean {
+  return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))
+}
+
+function isHrOrAdminPath(pathname: string): boolean {
+  return HR_OR_ADMIN_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
+}
+
+function isAdminOnlyPath(pathname: string): boolean {
+  return ADMIN_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -36,14 +65,11 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login')
-  const isDashboardPage = 
-    request.nextUrl.pathname.startsWith('/dashboard') || 
-    request.nextUrl.pathname.startsWith('/pos') || 
-    request.nextUrl.pathname.startsWith('/inventory') || 
-    request.nextUrl.pathname.startsWith('/hr')
+  const pathname = request.nextUrl.pathname
+  const isProtected = isProtectedPath(pathname)
 
   // Redirección 1: Si NO hay sesión y intenta entrar al sistema -> Al Login
-  if (!user && isDashboardPage) {
+  if (!user && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -54,6 +80,33 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
+  }
+
+  // Role-based access control (only when user is logged in and hitting a restricted path)
+  if (user && isHrOrAdminPath(pathname)) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    const role = (profile?.role as Role) ?? 'empleado'
+
+    // empleado: cannot access /hr-management, /hr, or /admin
+    if (role === 'empleado' && isHrOrAdminPath(pathname)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+
+    // supervisor: cannot access /admin
+    if (role === 'supervisor' && isAdminOnlyPath(pathname)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
+
+    // gerente: allowed all routes (no redirect)
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

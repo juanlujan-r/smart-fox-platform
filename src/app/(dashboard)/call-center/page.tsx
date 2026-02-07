@@ -253,7 +253,13 @@ export default function CallCenterPage() {
         </div>
       )}
 
-      {!agentProfile && (role === 'empleado' || role === 'supervisor') && (
+      {!agentProfile && role !== 'gerente' && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm">
+          Tu perfil de agente no esta configurado. Contacta a un gerente para activarlo.
+        </div>
+      )}
+
+      {!agentProfile && role === 'gerente' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
           <h2 className="text-lg font-bold text-gray-900">Activar perfil de agente</h2>
           <p className="text-sm text-gray-600 mt-2">
