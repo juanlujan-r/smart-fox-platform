@@ -109,6 +109,7 @@ export default function SalaryManager() {
           changed_by_id: currentUser.id,
           old_salary: pendingUpdate.oldSalary,
           new_salary: newSalary,
+          effective_date: new Date().toISOString().split('T')[0],
           change_reason: `Actualización manual por ${currentUser.full_name}`
         });
 

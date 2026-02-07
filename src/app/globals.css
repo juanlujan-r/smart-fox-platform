@@ -9,14 +9,12 @@
 html {
   height: 100%;
   background-color: #f3f4f6;
-  overflow: hidden;
 }
 
 body {
   height: 100%;
   color: #111827;
   background-color: #f3f4f6;
-  overflow: hidden;
   margin: 0;
   padding: 0;
 }

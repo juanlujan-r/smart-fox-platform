@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
+import { validateTwilioRequest } from '@/lib/twilio-security';
 
 export const runtime = 'nodejs';
 
@@ -16,6 +17,13 @@ export async function POST(request: NextRequest) {
     // Extract phone number early for rate limiting
     const formData = await request.formData();
     const from = formData.get('From') as string;
+    
+    // SECURITY: Validate Twilio signature
+    const isValidTwilioRequest = await validateTwilioRequest(request, formData);
+    if (!isValidTwilioRequest) {
+        console.error('🔴 SECURITY: Rejected unauthorized webhook request');
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
     
     // Rate limit: 10 calls per minute per phone number
     const rateLimit = checkRateLimit(`incoming-call:${from}`, 10, 60000);

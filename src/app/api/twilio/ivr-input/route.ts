@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateTwilioRequest } from '@/lib/twilio-security';
 
 export const runtime = 'nodejs';
 
@@ -26,6 +27,15 @@ const QUEUE_MESSAGES: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
     try {
+        const formData = await request.formData();
+        
+        // SECURITY: Validate Twilio signature
+        const isValidTwilioRequest = await validateTwilioRequest(request, formData);
+        if (!isValidTwilioRequest) {
+            console.error('🔴 SECURITY: Rejected unauthorized ivr-input webhook');
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+        
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
@@ -38,7 +48,6 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = createClient(supabaseUrl, serviceRoleKey);
-        const formData = await request.formData();
 
         const digits = formData.get('Digits') as string;
         const callSid = formData.get('CallSid') as string;

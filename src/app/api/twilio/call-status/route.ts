@@ -7,11 +7,21 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateTwilioRequest } from '@/lib/twilio-security';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
     try {
+        const formData = await request.formData();
+        
+        // SECURITY: Validate Twilio signature
+        const isValidTwilioRequest = await validateTwilioRequest(request, formData);
+        if (!isValidTwilioRequest) {
+            console.error('🔴 SECURITY: Rejected unauthorized call-status webhook');
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+        }
+        
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
@@ -24,7 +34,6 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = createClient(supabaseUrl, serviceRoleKey);
-        const formData = await request.formData();
 
         const callSid = formData.get('CallSid') as string;
         const callStatus = formData.get('CallStatus') as string;

@@ -232,9 +232,9 @@ export default function ManagerDashboard({ userRole }: { userRole: string }) {
               <div>
                 <p className="text-xs text-gray-500 uppercase font-bold">Costo por Minuto</p>
                 <h3 className="text-2xl font-black text-gray-800 dark:text-white mt-2">
-                  ${(payrollStats.totalPayroll / (payrollStats.employeesWithSalary * 8 * 60) || 0).toFixed(2)}
+                  ${(payrollStats.totalPayroll / (payrollStats.employeesWithSalary * 12600) || 0).toFixed(2)}
                 </h3>
-                <p className="text-xs text-gray-400 mt-2">Jornada de 8h</p>
+                <p className="text-xs text-gray-400 mt-2">Ley 2101 (12600 min/mes)</p>
               </div>
               <div className="p-2 bg-orange-50 text-orange-600 rounded-lg">
                 <Clock className="w-5 h-5" />

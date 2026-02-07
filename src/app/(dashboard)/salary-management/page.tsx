@@ -99,11 +99,11 @@ export default function SalaryManagementPage() {
 
     if (!changeReason.trim()) {
       setMessage(t('reason') + ' ' + t('required'));
+      return;
+    }
 
-         if (!effectiveDate) {
-           setMessage('Fecha efectiva requerida');
-           return;
-         }
+    if (!effectiveDate) {
+      setMessage('Fecha efectiva requerida');
       return;
     }
 
@@ -131,6 +131,7 @@ export default function SalaryManagementPage() {
           employee_id: employeeId,
           old_salary: oldSalary,
           new_salary: salaryAmount,
+          effective_date: effectiveDate,
           change_reason: changeReason,
           changed_by_id: user.id,
         });

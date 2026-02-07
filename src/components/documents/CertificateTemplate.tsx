@@ -4,6 +4,13 @@ import { Box, Printer } from 'lucide-react';
 export default function CertificateTemplate({ profile }: { profile: unknown }) {
   const currentDate = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
   const salaryFormatted = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(profile.base_salary || 0);
+  const contractTypeRaw = String((profile as { contract_type?: string }).contract_type || '');
+  const normalizedContract = contractTypeRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  let contractLabel = 'Indefinido';
+  if (normalizedContract.includes('obra') || normalizedContract.includes('labor')) contractLabel = 'Obra o Labor';
+  else if (normalizedContract.includes('fijo')) contractLabel = 'T?rmino Fijo';
+  else if (normalizedContract.includes('indef')) contractLabel = 'Indefinido';
+  else if (contractTypeRaw) contractLabel = contractTypeRaw;
 
   const handlePrint = () => {
     window.print();
@@ -60,7 +67,7 @@ export default function CertificateTemplate({ profile }: { profile: unknown }) {
             </p>
             <p>
                 Actualmente desempeña el cargo de <strong>{profile.role?.toUpperCase()}</strong> mediante un contrato a 
-                término <strong>Indefinido</strong>, devengando un salario mensual básico de:
+                término <strong>{contractLabel}</strong>, devengando un salario mensual básico de:
             </p>
             <p className="text-center font-bold text-xl my-8">
                 {salaryFormatted} M/L

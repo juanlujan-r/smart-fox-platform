@@ -13,6 +13,7 @@ interface ProfileInfo {
   role: string;
   supervisor_id: string;
   hiring_date: string;
+  contract_type: string;
 }
 
 export default function MyInfoPage() {
@@ -36,7 +37,7 @@ export default function MyInfoPage() {
       // Load profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('full_name, cargo, base_salary, role, supervisor_id, hiring_date')
+        .select('full_name, cargo, base_salary, role, supervisor_id, hiring_date, contract_type')
         .eq('id', user.id)
         .single();
 
@@ -142,6 +143,14 @@ export default function MyInfoPage() {
       doc.setTextColor(0, 0, 0);
 
       // Certificate content
+      const contractTypeRaw = String(profile.contract_type || '');
+      const normalizedContract = contractTypeRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      let contractLabel = 'Indefinido';
+      if (normalizedContract.includes('obra') || normalizedContract.includes('labor')) contractLabel = 'Obra o Labor';
+      else if (normalizedContract.includes('fijo')) contractLabel = 'Término Fijo';
+      else if (normalizedContract.includes('indef')) contractLabel = 'Indefinido';
+      else if (contractTypeRaw) contractLabel = contractTypeRaw;
+
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
 
@@ -197,6 +206,9 @@ export default function MyInfoPage() {
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
+      doc.text(`Tipo de contrato: ${contractLabel}`, margin, yPosition);
+      yPosition += lineHeight * 1.8;
+
       doc.text('Con la siguiente información salarial:', margin, yPosition);
       yPosition += lineHeight * 2;
 
