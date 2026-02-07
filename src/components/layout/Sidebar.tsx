@@ -57,7 +57,7 @@ export default function Sidebar() {
         />
       </div>
 
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden">
         {menu.filter(item => item.roles.includes(userRole)).map((item) => (
           <Link key={item.path} href={item.path} className="flex items-center gap-3 p-3 text-gray-300 bg-transparent hover:bg-gray-800 hover:text-white rounded-xl transition-all font-semibold text-sm group">
             <item.icon className="w-5 h-5 text-gray-400 group-hover:text-[#FF8C00] transition-colors" /> 
