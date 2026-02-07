@@ -1,36 +1,203 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart Fox Platform - Enterprise Management System
 
-## Getting Started
+Una plataforma integral de gestión empresarial para RH, Inventario, POS, Asistencia y Nómina. Construida con Next.js 16, React 19 y Supabase (PostgreSQL).
 
-First, run the development server:
+## 📚 Documentación
+
+**[→ DOCUMENTACIÓN COMPLETA EN ESPAÑOL](./README_ES.md)**
+
+Lee la documentación completa en español para que desarrolladores y Copilot IA puedan entender la arquitectura del proyecto, la configuración y contribuir de manera efectiva.
+
+---
+
+## Inicio Rápido
+
+### Requisitos Previos
+- Node.js 18+
+- npm 9+
+- Supabase CLI v2.75+
+- Git
+
+### Instalación
 
 ```bash
+# Clonar repositorio
+git clone https://github.com/juanlujan-r/smart-fox-platform.git
+cd smart-fox-platform
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+nano .env.local  # Agregar NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# Iniciar BD local
+supabase start
+
+# Aplicar migraciones
+supabase db push
+
+# Ejecutar servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Características Principales
 
-## Learn More
+✅ **Control de Acceso Basado en Roles (RBAC)** - Empleado, Supervisor, Gerente  
+✅ **Gestión de RH** - Asistencia, Horarios, Solicitudes, Nómina  
+✅ **Sistema de Inventario** - Gestión de productos y stock  
+✅ **Punto de Venta (POS)** - Órdenes de compra  
+✅ **Dashboard en Tiempo Real** - KPIs y análisis del equipo  
+✅ **Row-Level Security** - Seguridad a nivel de BD  
+✅ **TypeScript** - Seguridad de tipos completa  
+✅ **Usuarios de Prueba** - 13 usuarios preconfigurados con datos completos  
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Usuarios de Prueba
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Contraseña para todos**: `Test1234!`
 
-## Deploy on Vercel
+| Email | Nombre | Rol |
+|-------|--------|-----|
+| gerente1@smartfox.com | Carlos Germán Rodríguez | Gerente |
+| supervisor1@smartfox.com | José Miguel Sánchez | Supervisor |
+| supervisor2@smartfox.com | Laura Patricia Gutierrez | Supervisor |
+| emp1-emp10@smartfox.com | Varios nombres | Empleado |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Stack Tecnológico
+
+- **Frontend**: Next.js 16.1.6, React 19.2.3, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL 17.6), API REST
+- **Autenticación**: Supabase Auth con JWT
+- **Almacenamiento**: Supabase Storage
+- **Herramientas**: Supabase CLI v2.75.5, ESLint, Prettier
+
+---
+
+## Estructura del Proyecto
+
+```
+smart-fox-platform/
+├── src/
+│   ├── app/                    # App Router de Next.js
+│   │   ├── (auth)/             # Páginas de login
+│   │   ├── (dashboard)/        # Rutas protegidas
+│   │   └── api/                # Endpoints de API
+│   ├── components/             # Componentes reutilizables
+│   │   ├── RoleGuard.tsx       # Protección RBAC
+│   │   └── hr/                 # Componentes de RH
+│   ├── lib/                    # Utilidades
+│   ├── store/                  # Estados Zustand
+│   ├── types/                  # Tipos TypeScript
+│   └── context/                # React Context
+├── supabase/
+│   ├── migrations/             # Migraciones de BD
+│   ├── config.toml             # Config Supabase
+│   └── seed.sql                # Script de inicialización
+├── public/                     # Archivos estáticos
+└── package.json                # Dependencias
+```
+
+---
+
+## Comandos Útiles
+
+```bash
+# Desarrollo
+npm run dev              # Iniciar servidor dev
+npm run build            # Compilar para producción
+npm run lint             # Ejecutar linter
+npm run format           # Formatear código
+
+# Base de Datos
+supabase start           # Iniciar BD local
+supabase db push         # Aplicar migraciones
+supabase db reset        # Reiniciar BD (⚠️ borra datos)
+supabase logs local      # Ver logs
+
+# Git
+git commit -m "feat: descripción"
+git push origin main
+```
+
+---
+
+## Documentación
+
+- **[README_ES.md](./README_ES.md)** - Documentación completa en español (REFERENCIA PRINCIPAL)
+- **[SETUP_DATABASE.md](./SETUP_DATABASE.md)** - Guía de configuración de BD
+- **[PROJECT_INDEX.md](./PROJECT_INDEX.md)** - Índice del proyecto
+- **[TEST_USERS_CREDENTIALS.md](./TEST_USERS_CREDENTIALS.md)** - Credenciales de prueba
+
+---
+
+## Roles y Permisos (RBAC)
+
+| Rol | Permisos |
+|-----|----------|
+| **Empleado** | Ver su perfil, registrar asistencia, crear solicitudes |
+| **Supervisor** | Gestionar equipo, aprobar solicitudes, horarios |
+| **Gerente** | Acceso total, analytics, inventario, POS, nómina |
+
+---
+
+## Características de Seguridad
+
+✅ **Row-Level Security (RLS)** - Políticas PostgreSQL  
+✅ **Autenticación JWT** - Tokens seguros  
+✅ **Contraseñas Encriptadas** - bcrypt hashing  
+✅ **Protección CORS** - Orígenes restringidos  
+✅ **Auditoría** - Registro de cambios  
+✅ **Validación de Roles** - En servidor y cliente  
+
+---
+
+## Obtener Ayuda
+
+1. Lee [README_ES.md](./README_ES.md) para documentación completa
+2. Revisa [SETUP_DATABASE.md](./SETUP_DATABASE.md) para ayuda con BD
+3. Consulta ejemplos en el historial de Git
+4. Ve tipos TypeScript en `src/types/database.ts`
+
+---
+
+## Despliegue
+
+### A Producción
+
+```bash
+# Compilar
+npm run build
+
+# Push a Supabase remoto
+supabase db push --remote
+
+# Desplegar a Vercel (o tu hosting)
+# Conectar repo GitHub a Vercel dashboard
+# Auto-despliega en push a main
+```
+
+---
+
+## Licencia
+
+Proyecto privado de Smart Fox Solutions.
+
+---
+
+## Última Actualización
+
+**7 de febrero de 2026** - Documentación y datos de usuarios completados ✅  
+**Versión**: 1.0.0  
+**Estado**: En Desarrollo Activo
+
+---
+
+**Para la guía completa, consulta [README_ES.md](./README_ES.md)** ↗
