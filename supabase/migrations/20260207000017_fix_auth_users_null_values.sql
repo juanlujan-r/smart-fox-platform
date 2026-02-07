@@ -25,6 +25,3 @@ WHERE
   confirmation_token IS NULL OR
   recovery_token IS NULL OR
   reauthentication_token IS NULL;
-
--- Add comment for documentation
-COMMENT ON TABLE auth.users IS 'User authentication table. String columns should be empty strings, not NULL, to prevent scan errors.';
