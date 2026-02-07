@@ -24,6 +24,7 @@ import type { PersonalData } from '@/types/database';
 import ScheduleManager from '../hr/ScheduleManager';
 import SalaryManager from '@/components/hr/SalaryManager';
 import PayrollGenerator from '@/components/hr/PayrollGenerator';
+import EmployeeDetailModal from '@/components/hr/EmployeeDetailModal';
 
 const BUCKET = 'hr-attachments';
 
@@ -90,6 +91,8 @@ function GestionEquipoPageContent() {
   const [nowTs, setNowTs] = useState(Date.now());
   const [activeTab, setActiveTab] = useState<'equipo' | 'horarios'>('equipo');
   const [userRole, setUserRole] = useState<string>('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [selectedEmployeeName, setSelectedEmployeeName] = useState<string>('');
 
   const loadAttendance = async () => {
     const today = format(new Date(), 'yyyy-MM-dd');
@@ -433,7 +436,15 @@ function GestionEquipoPageContent() {
           {liveCards.map(({ profile, lastLog, state, config, name }) => (
             <div
               key={profile.id}
-              className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4 flex items-center gap-4 shadow-sm"
+              onClick={() => {
+                if (userRole === 'supervisor' || userRole === 'gerente') {
+                  setSelectedEmployeeId(profile.id);
+                  setSelectedEmployeeName(name);
+                }
+              }}
+              className={`rounded-2xl border border-gray-100 bg-gray-50/80 p-4 flex items-center gap-4 shadow-sm ${
+                (userRole === 'supervisor' || userRole === 'gerente') ? 'cursor-pointer hover:shadow-lg hover:border-[#FF8C00]/50 transition' : ''
+              }`}
             >
               <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${config.bg}`} title={config.label}>
                 {(() => {
@@ -596,6 +607,19 @@ function GestionEquipoPageContent() {
             <PayrollGenerator />
           </div>
         </>
+      )}
+
+      {/* Employee Detail Modal */}
+      {selectedEmployeeId && (
+        <EmployeeDetailModal
+          employeeId={selectedEmployeeId}
+          employeeName={selectedEmployeeName}
+          onClose={() => {
+            setSelectedEmployeeId(null);
+            setSelectedEmployeeName('');
+          }}
+          userRole={userRole}
+        />
       )}
     </div>
   );
