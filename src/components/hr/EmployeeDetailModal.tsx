@@ -68,101 +68,28 @@ export default function EmployeeDetailModal({
     try {
       setLoading(true);
 
-      const [
-        callsRes,
-        permissionsRes,
-        disciplinaryRes,
-        schedulesRes,
-        novedadesRes,
-        logsRes,
-        profileRes,
-      ] = await Promise.all([
-        supabase
-          .from('call_records')
-          .select('duration, created_at')
-          .eq('agent_user_id', employeeId)
-          .order('created_at', { ascending: false })
-          .limit(100),
-        supabase
-          .from('hr_requests')
-          .select('id, user_id, type, title, status, start_date, end_date, created_at')
-          .eq('user_id', employeeId)
-          .in('type', ['permiso', 'licencia', 'vacaciones']),
-        supabase
-          .from('disciplinary_actions')
-          .select('id, user_id, type, description, created_by, created_at, expires_at')
-          .eq('user_id', employeeId)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('schedules')
-          .select('id, user_id, scheduled_date, start_time, end_time, shift_type')
-          .eq('user_id', employeeId)
-          .order('scheduled_date', { ascending: false })
-          .limit(30),
-        supabase
-          .from('hr_requests')
-          .select('id, user_id, type, title, description, created_at')
-          .eq('user_id', employeeId)
-          .eq('type', 'novedad')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('attendance_logs')
-          .select('id, user_id, state, type, created_at, updated_at')
-          .eq('user_id', employeeId)
-          .order('created_at', { ascending: false })
-          .limit(50),
-        supabase
-          .from('profiles')
-          .select('cargo, supervisor_id')
-          .eq('id', employeeId)
-          .single(),
-      ]);
+      // Use PostgreSQL function to get all metrics in a single query
+      // This eliminates N+1 query problem and improves performance
+      const { data: metricsData, error } = await supabase
+        .rpc('get_employee_metrics', { employee_id: employeeId });
 
-      // Calcular métricas
-      let totalCallTime = 0;
-      let lastConnection = null;
+      if (error) throw error;
 
-      if (callsRes.data && (callsRes.data as any).length > 0) {
-        totalCallTime = (callsRes.data as any).reduce(
-          (sum: number, record: any) => sum + (record.duration || 0),
-          0
-        );
-        lastConnection = ((callsRes.data as any)[0] as any)?.created_at || null;
+      if (metricsData) {
+        setMetrics({
+          totalConnections: metricsData.totalConnections || 0,
+          lastConnection: metricsData.lastConnection || null,
+          totalCallTime: metricsData.totalCallTime || 0,
+          totalPermissions: metricsData.totalPermissions || 0,
+          pendingPermissions: metricsData.pendingPermissions || 0,
+          disciplinaryActions: metricsData.disciplinaryActions || [],
+          schedules: metricsData.schedules || [],
+          novedades: [], // Not included in function, can be added if needed
+          attendanceLogs: metricsData.attendanceLogs || [],
+          cargo: metricsData.cargo || '',
+          supervisor_name: metricsData.supervisorName || '',
+        });
       }
-
-      const pendingPermissions = permissionsRes.data?.filter(
-        (r: any) => r.status === 'pendiente'
-      ).length || 0;
-
-      // Get supervisor name if supervisor_id exists
-      let supervisorName = '';
-      let cargo = '';
-      const profileRow = profileRes.data as any;
-      if (profileRow?.supervisor_id) {
-        const { data: supervisorData } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('id', profileRow.supervisor_id)
-          .single();
-        supervisorName = supervisorData?.full_name || '';
-      }
-      if (profileRow?.cargo) {
-        cargo = profileRow.cargo;
-      }
-
-      setMetrics({
-        totalConnections: logsRes.data?.length || 0,
-        lastConnection,
-        totalCallTime,
-        totalPermissions: permissionsRes.data?.length || 0,
-        pendingPermissions,
-        disciplinaryActions: disciplinaryRes.data || [],
-        schedules: schedulesRes.data || [],
-        novedades: novedadesRes.data || [],
-        attendanceLogs: logsRes.data || [],
-        cargo,
-        supervisor_name: supervisorName,
-      });
     } catch (error) {
       console.error('Error loading metrics:', error);
       pushToast('Error al cargar métricas del empleado', 'error');

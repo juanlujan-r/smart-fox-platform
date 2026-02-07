@@ -3,8 +3,16 @@ import MobileNav from '@/components/layout/MobileNav';
 import TopBar from '@/components/layout/TopBar';
 import AuthGuard from '../../components/AuthGuard';
 import { EmployeeModalProvider } from '@/context/EmployeeModalContext';
-import EmployeeDetailModal from '@/components/hr/EmployeeDetailModal';
-import EmployeeModalRenderer from '@/components/hr/EmployeeModalRenderer';
+import dynamic from 'next/dynamic';
+
+// Lazy load heavy components
+const EmployeeModalRenderer = dynamic(
+  () => import('@/components/hr/EmployeeModalRenderer'),
+  { 
+    ssr: false,
+    loading: () => null // No loading indicator needed for modal
+  }
+);
 
 export default function DashboardLayout({
   children,

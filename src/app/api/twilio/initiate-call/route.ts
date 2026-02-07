@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Twilio } from 'twilio';
+import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -40,6 +41,15 @@ export async function POST(request: NextRequest) {
                 { error: 'Missing toNumber' },
                 { status: 400 }
             );
+        }
+
+        // Rate limit: 5 calls per minute per agent
+        if (agentId) {
+            const rateLimit = checkRateLimit(`initiate-call:${agentId}`, 5, 60000);
+            if (!rateLimit.allowed) {
+                console.warn(`⚠️ Rate limited outbound call for agent ${agentId}`);
+                return createRateLimitResponse(rateLimit.resetTime, 'Too many outbound calls');
+            }
         }
 
         const twilioClient = new Twilio(accountSid, authToken);

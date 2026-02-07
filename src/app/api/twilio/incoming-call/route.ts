@@ -8,10 +8,21 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
+    // Extract phone number early for rate limiting
+    const formData = await request.formData();
+    const from = formData.get('From') as string;
+    
+    // Rate limit: 10 calls per minute per phone number
+    const rateLimit = checkRateLimit(`incoming-call:${from}`, 10, 60000);
+    if (!rateLimit.allowed) {
+        console.warn(`⚠️ Rate limited incoming call from ${from}`);
+        return createRateLimitResponse(rateLimit.resetTime, 'Too many calls from this number');
+    }
     try {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || '';
         const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -25,20 +36,18 @@ export async function POST(request: NextRequest) {
         }
 
         const supabase = createClient(supabaseUrl, serviceRoleKey);
-        const formData = await request.formData();
-
-        const from = formData.get('From') as string;
+        
         const to = formData.get('To') as string;
         const callSid = formData.get('CallSid') as string;
 
         console.log('📥 Incoming call:', { from, to, callSid });
 
-        // Get or create contact in CRM
+        // Get or create contact in CRM using upsert
         await supabase
             .from('crm_contacts')
-            .insert(
-                [{ phone_number: from, total_call_count: 1, contact_type: 'lead' }],
-                { onConflict: 'phone_number' }
+            .upsert(
+                { phone_number: from, total_call_count: 1, contact_type: 'lead' },
+                { onConflict: 'phone_number', ignoreDuplicates: false }
             )
             .select();
 

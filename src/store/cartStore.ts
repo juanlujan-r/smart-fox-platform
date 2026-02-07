@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { CartItem, Product } from '@/types/database';
 import { supabase } from '@/lib/supabase';
 
@@ -12,7 +13,9 @@ interface CartState {
   processSale: () => Promise<{ success: boolean; message?: string }>;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
   cart: [],
   addItem: (product) => set((state) => {
     const existing = state.cart.find(i => i.id === product.id);
@@ -65,4 +68,12 @@ export const useCartStore = create<CartState>((set, get) => ({
       return { success: false, message: (error as Error).message };
     }
   },
-}));
+}),
+    {
+      name: 'cart-storage',
+      storage: createJSONStorage(() => localStorage),
+      // Only persist the cart array, not the functions
+      partialize: (state) => ({ cart: state.cart }),
+    }
+  )
+);
