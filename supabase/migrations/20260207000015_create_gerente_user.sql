@@ -31,7 +31,12 @@ BEGIN
       aud,
       confirmation_token,
       recovery_token,
-      email_change_token_new
+      email_change_token_new,
+      email_change_token_current,
+      email_change,
+      phone_change,
+      phone_change_token,
+      reauthentication_token
     ) 
     VALUES (
       'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid,
@@ -47,6 +52,11 @@ BEGIN
       'authenticated',
       '',
       '',
+      '',
+      '',
+      '',
+      '',
+      '',
       ''
     );
     existing_user_id := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid;
@@ -60,7 +70,15 @@ BEGIN
           COALESCE(raw_user_meta_data, '{}'::jsonb),
           '{role}',
           '"gerente"'::jsonb
-        )
+        ),
+        email_change = '',
+        email_change_token_new = '',
+        email_change_token_current = '',
+        phone_change = '',
+        phone_change_token = '',
+        confirmation_token = '',
+        recovery_token = '',
+        reauthentication_token = ''
     WHERE email = 'gerente1@smartfox.com';
     RAISE NOTICE 'Gerente1 user updated with ID: %', existing_user_id;
   END IF;
