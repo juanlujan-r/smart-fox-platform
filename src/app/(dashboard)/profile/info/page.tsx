@@ -97,87 +97,158 @@ export default function MyInfoPage() {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 20;
+      const margin = 25;
 
-      // Company header
-      doc.setFontSize(18);
+      // Background border
+      doc.setDrawColor(244, 124, 32); // Orange
+      doc.setLineWidth(0.5);
+      doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+
+      // Header background
+      doc.setFillColor(244, 124, 32); // Orange
+      doc.rect(0, 0, pageWidth, 35, 'F');
+
+      // Company name in header
+      doc.setTextColor(255, 255, 255); // White
+      doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
-      doc.text('SmartFox ERP Solutions', pageWidth / 2, margin + 10, { align: 'center' });
+      doc.text('SMART FOX SOLUTIONS S.A.S', pageWidth / 2, 15, { align: 'center' });
       
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text('Sistema de Gestión Empresarial', pageWidth / 2, margin + 16, { align: 'center' });
+      doc.text('NIT: 900.123.456-7 | Bogotá D.C. - Colombia', pageWidth / 2, 22, { align: 'center' });
+      doc.text('www.smartfoxsolutions.com | info@smartfoxsolutions.com', pageWidth / 2, 28, { align: 'center' });
 
-      // Add line separator
-      doc.setDrawColor(244, 120, 32);
-      doc.line(margin, margin + 22, pageWidth - margin, margin + 22);
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
 
       // Certificate title
-      doc.setFontSize(16);
+      doc.setFontSize(18);
+      doc.setTextColor(244, 124, 32); // Orange
       doc.setFont('helvetica', 'bold');
-      doc.text('CERTIFICADO LABORAL', pageWidth / 2, margin + 35, { align: 'center' });
+      doc.text('CERTIFICADO LABORAL', pageWidth / 2, 50, { align: 'center' });
+     
+      // Certificate number
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.setFont('helvetica', 'normal');
+      const certNumber = `No. ${Date.now().toString().slice(-8)}`;
+      doc.text(certNumber, pageWidth / 2, 56, { align: 'center' });
 
-      let yPosition = margin + 50;
-      const lineHeight = 8;
+      let yPosition = 68;
+      const lineHeight = 7;
+     
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
 
       // Certificate content
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
-      
-      doc.text('Por medio de la presente, se certifica que:', margin, yPosition);
-      yPosition += lineHeight * 1.5;
+
+      const introText = 'La suscrita Gerencia de Recursos Humanos de SMART FOX SOLUTIONS S.A.S, certifica que:';
+      doc.text(introText, margin, yPosition, { maxWidth: pageWidth - margin * 2, align: 'justify' });
+      yPosition += lineHeight * 2.5;
+  // Employee name box
+  doc.setFillColor(255, 248, 240); // Light orange
+  doc.roundedRect(margin, yPosition - 5, pageWidth - margin * 2, 12, 2, 2, 'F');
 
       doc.setFont('helvetica', 'bold');
-      doc.text(profile.full_name.toUpperCase(), margin, yPosition);
-      yPosition += lineHeight * 1.5;
+      doc.setFontSize(12);
+      doc.setTextColor(244, 124, 32); // Orange
+      doc.text(profile.full_name.toUpperCase(), pageWidth / 2, yPosition + 2, { align: 'center' });
+      yPosition += lineHeight * 3;
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(11);
 
       doc.setFont('helvetica', 'normal');
-      doc.text(`Identificado con cédula de ciudadanía ${user.email?.split('@')[0] || 'N/A'}`, margin, yPosition);
-      yPosition += lineHeight * 2;
+     
+       // Get document_id from profile
+       const { data: docData } = await supabase
+         .from('profiles')
+         .select('document_id')
+         .eq('id', user.id)
+         .single();
+     
+       const docId = docData?.document_id || user.email?.split('@')[0] || 'N/A';
+       doc.text(`Identificado(a) con Cédula de Ciudadanía No. ${docId}`, margin, yPosition);
+       yPosition += lineHeight * 2.5;
 
-      doc.text('Ha sido empleado de SmartFox ERP Solutions en calidad de:', margin, yPosition);
-      yPosition += lineHeight * 1.5;
+      doc.text('Se encuentra vinculado(a) a nuestra organización desde:', margin, yPosition);
+      yPosition += lineHeight * 1.8;
 
       doc.setFont('helvetica', 'bold');
-      doc.text(`${profile.cargo || 'Sin asignar'} (${profile.role})`, margin, yPosition);
-      yPosition += lineHeight * 2;
+      doc.setFontSize(12);
+      doc.setTextColor(244, 124, 32); // Orange
+      doc.text(`${new Date(profile.hiring_date).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}`, margin + 10, yPosition);
+      yPosition += lineHeight * 2.5;
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(11);
 
       doc.setFont('helvetica', 'normal');
-      doc.text('Con los siguientes datos laborales:', margin, yPosition);
-      yPosition += lineHeight * 1.5;
+      doc.text('Desempeñándose actualmente en el cargo de:', margin, yPosition);
+      yPosition += lineHeight * 1.8;
+     
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(244, 124, 32); // Orange
+      doc.text(`${profile.cargo || 'Agente'} - ${profile.role === 'gerente' ? 'Gerente de Cuenta' : profile.role === 'supervisor' ? 'Líder de Equipo' : 'Agente'}`, margin + 10, yPosition);
+      yPosition += lineHeight * 2.5;
+     
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Con la siguiente información salarial:', margin, yPosition);
+      yPosition += lineHeight * 2;
 
       // Data table
-      const data = [
-        ['Fecha de Contratación:', new Date(profile.hiring_date).toLocaleDateString('es-CO')],
-        ['Salario Actual:', `$${profile.base_salary.toLocaleString('es-CO')}`],
-        ['Promedio Últimos 6 Meses:', `$${avgSalary.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`],
-        ['Jefe Directo:', supervisor || 'Sin asignar'],
-        ['Gerente Asignado:', manager || 'Sin asignar'],
-      ];
+       // Table background
+       doc.setFillColor(245, 245, 245);
+       doc.roundedRect(margin + 5, yPosition - 2, pageWidth - margin * 2 - 10, 28, 2, 2, 'F');
+     
+       const data = [
+         ['Salario Base Mensual:', `$${profile.base_salary.toLocaleString('es-CO')} COP`],
+         ['Promedio Últimos 6 Meses:', `$${avgSalary.toLocaleString('es-CO', { maximumFractionDigits: 0 })} COP`],
+         ['Supervisor Directo:', supervisor || 'No asignado'],
+         ['Gerente de Área:', manager || 'No asignado'],
+       ];
 
       data.forEach((row) => {
+          doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(row[0], margin, yPosition);
+        doc.text(row[0], margin + 10, yPosition);
         doc.setFont('helvetica', 'normal');
-        doc.text(row[1], margin + 60, yPosition);
-        yPosition += lineHeight * 1.3;
+        doc.text(row[1], margin + 70, yPosition);
+        yPosition += lineHeight * 1.5;
       });
 
-      yPosition += lineHeight;
-
-      doc.text('Esta certificación se expide a solicitud del interesado para los fines que estime conveniente.', margin, yPosition, { maxWidth: pageWidth - margin * 2 });
       yPosition += lineHeight * 2;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'italic');
+      const finalText = 'Esta certificación se expide a solicitud del interesado para los fines que estime conveniente, en la ciudad de Bogotá D.C.';
+      doc.text(finalText, margin, yPosition, { maxWidth: pageWidth - margin * 2, align: 'justify' });
+      yPosition += lineHeight * 3;
 
       // Date
       const today = new Date();
-      const dateStr = today.toLocaleDateString('es-CO');
-      doc.setFont('helvetica', 'italic');
-      doc.text(`Expedido en: ${dateStr}`, margin, pageHeight - margin - 20);
+      const dateStr = today.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Fecha de expedición: ${dateStr}`, margin, pageHeight - margin - 30);
 
       // Signature placeholder
-      doc.text('_____________________', margin + 40, pageHeight - margin - 5);
+      doc.setDrawColor(0, 0, 0);
+      doc.line(pageWidth / 2 - 30, pageHeight - margin - 8, pageWidth / 2 + 30, pageHeight - margin - 8);
       doc.setFontSize(9);
-      doc.text('Firma Autorizada', margin + 40, pageHeight - margin + 2, { align: 'center' });
+      doc.setFont('helvetica', 'bold');
+      doc.text('Gerencia de Recursos Humanos', pageWidth / 2, pageHeight - margin - 3, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.text('SMART FOX SOLUTIONS S.A.S', pageWidth / 2, pageHeight - margin + 2, { align: 'center' });
+     
+      // Footer note
+      doc.setFontSize(7);
+      doc.setTextColor(100, 100, 100);
+      doc.text('Este documento es válido sin firma autógrafa según lo establecido en el decreto 2150 de 1995', pageWidth / 2, pageHeight - 8, { align: 'center' });
 
       // Save PDF
       doc.save(`Certificado_Laboral_${profile.full_name.replace(/\s+/g, '_')}.pdf`);

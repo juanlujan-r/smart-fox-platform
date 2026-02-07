@@ -33,6 +33,7 @@ export default function SalaryManagementPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newSalary, setNewSalary] = useState('');
   const [changeReason, setChangeReason] = useState('');
+   const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -86,6 +87,7 @@ export default function SalaryManagementPage() {
   const cancelEdit = () => {
     setEditingId(null);
     setNewSalary('');
+      setEffectiveDate(new Date().toISOString().split('T')[0]);
     setChangeReason('');
   };
 
@@ -97,6 +99,11 @@ export default function SalaryManagementPage() {
 
     if (!changeReason.trim()) {
       setMessage(t('reason') + ' ' + t('required'));
+
+         if (!effectiveDate) {
+           setMessage('Fecha efectiva requerida');
+           return;
+         }
       return;
     }
 
@@ -273,6 +280,21 @@ export default function SalaryManagementPage() {
                   className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   rows={3}
                   placeholder="Ejemplo: Promoción a gerente, Aumento por desempeño, Ajuste salarial..."
+                             <div>
+                               <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                 Fecha Efectiva del Cambio *
+                               </label>
+                               <input
+                                 type="date"
+                                 value={effectiveDate}
+                                 onChange={(e) => setEffectiveDate(e.target.value)}
+                                 disabled={saving}
+                                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                               />
+                               <p className="text-xs text-gray-500 mt-1">
+                                 Fecha a partir de la cual el nuevo salario será efectivo
+                               </p>
+                             </div>
                 />
               </div>
               <div className="flex gap-3">
