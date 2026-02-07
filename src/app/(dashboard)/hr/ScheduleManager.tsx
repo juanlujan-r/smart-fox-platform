@@ -204,7 +204,6 @@ export default function ScheduleManager() {
 			setSaving(true);
 			setError(null);
 			const payload = {
-				id: editing.id,
 				user_id: editing.user_id,
 				scheduled_date: editing.scheduled_date,
 				start_time: editing.start_time,
@@ -213,15 +212,29 @@ export default function ScheduleManager() {
 				break_end: editing.break_end ?? null,
 			};
 
-			const { data, error: upsertError } = await supabase
+			// Delete existing schedule for this user on this date
+			const { error: deleteError } = await supabase
 				.from('schedules')
-				.upsert(payload, { onConflict: 'user_id,scheduled_date' })
+				.delete()
+				.eq('user_id', editing.user_id)
+				.eq('scheduled_date', editing.scheduled_date);
+
+			if (deleteError) {
+				console.error('Error deleting schedule:', deleteError);
+				setError('Error al guardar: ' + deleteError.message);
+				return;
+			}
+
+			// Insert new schedule
+			const { data, error: insertError } = await supabase
+				.from('schedules')
+				.insert([payload])
 				.select('*')
 				.single();
 
-			if (upsertError) {
-				console.error('Error upserting schedule:', upsertError);
-				setError('Error al guardar: ' + upsertError.message);
+			if (insertError) {
+				console.error('Error inserting schedule:', insertError);
+				setError('Error al guardar: ' + insertError.message);
 				return;
 			}
 
@@ -251,8 +264,21 @@ export default function ScheduleManager() {
 			setSaving(true);
 			setError(null);
 			const existing = scheduleByUserDate.get(`${breakUserId}-${breakDate}`);
+			
+			// Delete existing schedule for this user on this date
+			const { error: deleteError } = await supabase
+				.from('schedules')
+				.delete()
+				.eq('user_id', breakUserId)
+				.eq('scheduled_date', breakDate);
+
+			if (deleteError) {
+				console.error('Error deleting break:', deleteError);
+				setError('Error al guardar: ' + deleteError.message);
+				return;
+			}
+
 			const payload = {
-				id: existing?.id,
 				user_id: breakUserId,
 				scheduled_date: breakDate,
 				start_time: existing?.start_time ?? '08:00',
@@ -261,15 +287,15 @@ export default function ScheduleManager() {
 				break_end: breakEnd,
 			};
 
-			const { data, error: upsertError } = await supabase
+			const { data, error: insertError } = await supabase
 				.from('schedules')
-				.upsert(payload, { onConflict: 'user_id,scheduled_date' })
+				.insert([payload])
 				.select('*')
 				.single();
 
-			if (upsertError) {
-				console.error('Error upserting break window:', upsertError);
-				setError('Error al guardar: ' + upsertError.message);
+			if (insertError) {
+				console.error('Error inserting break window:', insertError);
+				setError('Error al guardar: ' + insertError.message);
 				return;
 			}
 
