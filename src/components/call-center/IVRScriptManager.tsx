@@ -6,6 +6,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import * as supabaseService from '@/lib/call-center/supabase';
 
 export interface IVRMenuOption {
     digit: string;
@@ -23,23 +24,109 @@ export interface IVRMenu {
 }
 
 export function IVRScriptManager() {
-    const [menus, setMenus] = useState<IVRMenu[]>([
-        {
-            id: 'main',
-            message: 'Bienvenido a Smart Fox Solutions. Para Ventas presione 1, para Soporte presione 2, para Recursos Humanos presione 3',
-            options: [
-                { digit: '1', description: 'Ventas', actionQueue: 'sales' },
-                { digit: '2', description: 'Soporte', actionQueue: 'support' },
-                { digit: '3', description: 'Recursos Humanos', actionQueue: 'hr' },
-            ],
-            maxAttempts: 3,
-            timeout: 10,
-        },
-    ]);
-
-    const [selectedMenu, setSelectedMenu] = useState<IVRMenu | null>(menus[0]);
+    const [scripts, setScripts] = useState<supabaseService.IVRScript[]>([]);
+    const [menus, setMenus] = useState<IVRMenu[]>([]);
+    const [selectedMenu, setSelectedMenu] = useState<IVRMenu | null>(null);
     const [editMode, setEditMode] = useState(false);
     const [formData, setFormData] = useState<Partial<IVRMenu>>({});
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [newScriptName, setNewScriptName] = useState('');
+
+    const [newScriptName, setNewScriptName] = useState('');
+
+    useEffect(() => {
+        loadScripts();
+    }, []);
+
+    const loadScripts = async () => {
+        try {
+            setLoading(true);
+            const data = await supabaseService.getIVRScripts();
+            setScripts(data);
+
+            // Load first active script
+            const activeScript = data.find(s => s.active) || data[0];
+            if (activeScript) {
+                loadMenusFromScript(activeScript);
+            } else {
+                // Create default menu if no scripts exist
+                setMenus([{
+                    id: 'main',
+                    message: 'Bienvenido a Smart Fox Solutions. Para Ventas presione 1, para Soporte presione 2, para Recursos Humanos presione 3',
+                    options: [
+                        { digit: '1', description: 'Ventas', actionQueue: 'sales' },
+                        { digit: '2', description: 'Soporte', actionQueue: 'support' },
+                        { digit: '3', description: 'Recursos Humanos', actionQueue: 'hr' },
+                    ],
+                    maxAttempts: 3,
+                    timeout: 10,
+                }]);
+                setSelectedMenu(menus[0]);
+            }
+        } catch (err) {
+            setError('Error cargando scripts IVR');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const loadMenusFromScript = (script: supabaseService.IVRScript) => {
+        try {
+            const scriptMenus = script.script_data?.menus || [];
+            if (scriptMenus.length > 0) {
+                setMenus(scriptMenus);
+                setSelectedMenu(scriptMenus[0]);
+                setFormData(scriptMenus[0]);
+            }
+        } catch (err) {
+            console.error('Error parsing script menus:', err);
+        }
+    };
+
+    const handleCreateNewScript = async () => {
+        if (!newScriptName.trim()) {
+            setError('El nombre del script es requerido');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const defaultMenu: IVRMenu = {
+                id: 'main',
+                message: 'Bienvenido a Smart Fox Solutions',
+                options: [],
+                maxAttempts: 3,
+                timeout: 10,
+            };
+
+            const newScript = await supabaseService.createIVRScript({
+                name: newScriptName,
+                description: '',
+                language: 'es',
+                welcome_message: defaultMenu.message,
+                script_data: { menus: [defaultMenu] },
+                active: false,
+            });
+
+            setScripts([newScript, ...scripts]);
+            setMenus([defaultMenu]);
+            setSelectedMenu(defaultMenu);
+            setFormData(defaultMenu);
+            setShowCreateModal(false);
+            setNewScriptName('');
+            setSuccess('Script IVR creado correctamente');
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+            setError('Error creando script IVR');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSelectMenu = (menu: IVRMenu) => {
         setSelectedMenu(menu);
@@ -66,18 +153,46 @@ export function IVRScriptManager() {
         setFormData({ ...formData, options: newOptions });
     };
 
-    const handleSaveMenu = () => {
+    const handleSaveMenu = async () => {
         if (!selectedMenu) return;
 
-        // Update menu in list
-        const updatedMenus = menus.map((m) =>
-            m.id === selectedMenu.id
-                ? { ...selectedMenu, ...formData }
-                : m
-        );
-        setMenus(updatedMenus);
-        setSelectedMenu(updatedMenus.find((m) => m.id === selectedMenu.id) || null);
-        setEditMode(false);
+        try {
+            setLoading(true);
+            setError(null);
+
+            // Update menu in list
+            const updatedMenus = menus.map((m) =>
+                m.id === selectedMenu.id
+                    ? { ...selectedMenu, ...formData }
+                    : m
+            );
+            setMenus(updatedMenus);
+
+            // Find current active script or use first one
+            const currentScript = scripts.find(s => s.active) || scripts[0];
+            
+            if (currentScript) {
+                // Update script in database
+                await supabaseService.updateIVRScript(currentScript.id, {
+                    script_data: { menus: updatedMenus },
+                    welcome_message: updatedMenus[0]?.message || '',
+                });
+
+                setSuccess('Script IVR guardado correctamente');
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                // Create new script if none exists
+                await handleCreateNewScript();
+            }
+
+            setSelectedMenu(updatedMenus.find((m) => m.id === selectedMenu.id) || null);
+            setEditMode(false);
+        } catch (err) {
+            setError('Error guardando script IVR');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -92,6 +207,24 @@ export function IVRScriptManager() {
                 </p>
             </div>
 
+            {/* Alerts */}
+            {error && (
+                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mx-6 mt-4 rounded">
+                    ❌ {error}
+                </div>
+            )}
+            {success && (
+                <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mx-6 mt-2 rounded">
+                    ✅ {success}
+                </div>
+            )}
+
+            {loading && (
+                <div className="flex items-center justify-center p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                </div>
+            )}
+
             <div className="container mx-auto px-6 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Menu list */}
@@ -99,7 +232,10 @@ export function IVRScriptManager() {
                         <div className="bg-white rounded-lg shadow">
                             <div className="p-6 border-b border-gray-200">
                                 <h2 className="font-bold text-gray-900 mb-4">📋 Menús IVR</h2>
-                                <button className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">
+                                <button 
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="w-full bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600"
+                                >
                                     ➕ Crear Nuevo Menú
                                 </button>
                             </div>
@@ -352,6 +488,50 @@ export function IVRScriptManager() {
                     )}
                 </div>
             </div>
+
+            {/* Create New Script Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">
+                            ➕ Crear Nuevo Script IVR
+                        </h2>
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-semibold text-gray-900 mb-2">
+                                Nombre del Script
+                            </label>
+                            <input
+                                type="text"
+                                value={newScriptName}
+                                onChange={(e) => setNewScriptName(e.target.value)}
+                                placeholder="Ej: IVR Principal, IVR Ventas"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleCreateNewScript}
+                                disabled={loading || !newScriptName.trim()}
+                                className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg disabled:opacity-50"
+                            >
+                                Crear
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowCreateModal(false);
+                                    setNewScriptName('');
+                                }}
+                                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-2 rounded-lg"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

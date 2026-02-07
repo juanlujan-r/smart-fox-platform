@@ -20,6 +20,7 @@ import {
     getOrCreateContact,
     getContactCallHistory,
     updateContact as updateContactDB,
+    addCallNote,
 } from '@/lib/call-center/supabase';
 import { supabase } from '@/lib/call-center/supabase';
 
@@ -53,7 +54,7 @@ export interface UseCallCenterReturn {
     callHistory: CallRecord[];
     isCallActive: boolean;
     startCall: (phoneNumber: string) => Promise<void>;
-    endCall: () => Promise<void>;
+    endCall: (notes?: string) => Promise<void>;
     transferCall: (toNumber: string) => Promise<void>;
     
     // CRM
@@ -211,7 +212,7 @@ export function useCallCenter(): UseCallCenterReturn {
         }
     }, [agentProfile, updateAgentStatus]);
 
-    const endCall = useCallback(async () => {
+    const endCall = useCallback(async (notes?: string) => {
         if (!currentCall) return;
 
         try {
@@ -227,7 +228,17 @@ export function useCallCenter(): UseCallCenterReturn {
                 call_status: 'completed',
                 ended_at: new Date().toISOString(),
                 duration_seconds: duration,
+                notes: notes,
             });
+
+            // Save call notes if provided
+            if (notes && notes.trim() && agentProfile) {
+                try {
+                    await addCallNote(currentCall.id, notes, agentProfile.id);
+                } catch (noteError) {
+                    console.warn('Failed to save call note:', noteError);
+                }
+            }
 
             // Hang up with API (server handles Twilio)
             try {
@@ -253,7 +264,7 @@ export function useCallCenter(): UseCallCenterReturn {
         } finally {
             setLoading(false);
         }
-    }, [currentCall, updateAgentStatus]);
+    }, [currentCall, updateAgentStatus, agentProfile]);
 
     const transferCall = useCallback(async (toNumber: string) => {
         if (!currentCall) return;

@@ -38,6 +38,11 @@ export function AgentPanel() {
         }
     };
 
+    const handleEndCall = async () => {
+        await endCall(noteText);
+        setNoteText(''); // Clear notes after ending call
+    };
+
     const handleTransfer = async () => {
         if (transferInput.trim()) {
             await transferCall(transferInput.trim());
@@ -53,10 +58,10 @@ export function AgentPanel() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
-                            🎧 Panel do Agente
+                            🎧 Panel del Agente
                         </h1>
                         <p className="text-sm text-gray-500">
-                            Extension: {agentProfile?.extension || 'N/A'}
+                            Extensión: {agentProfile?.extension || 'N/A'}
                         </p>
                     </div>
                     <div className="text-right">
@@ -170,7 +175,7 @@ export function AgentPanel() {
                                 ↪️ Transferir Llamada
                             </button>
                             <button
-                                onClick={endCall}
+                                onClick={handleEndCall}
                                 disabled={loading}
                                 className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-2 rounded-lg disabled:opacity-50"
                             >

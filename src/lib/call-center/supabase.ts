@@ -157,6 +157,24 @@ export async function getAvailableAgents() {
     }
 }
 
+/**
+ * Obtiene lista completa de agentes
+ */
+export async function getAllAgents() {
+    try {
+        const { data, error } = await supabase
+            .from('call_center_agents')
+            .select('*')
+            .order('agent_status', { ascending: true });
+
+        if (error) throw error;
+        return data as AgentProfile[];
+    } catch (error) {
+        console.error('Error getting all agents:', error);
+        return [];
+    }
+}
+
 // ============================================================================
 // CALL RECORD OPERATIONS
 // ============================================================================
@@ -235,6 +253,25 @@ export async function getContactCallHistory(contactId: string) {
         return data as CallRecord[];
     } catch (error) {
         console.error('Error getting contact call history:', error);
+        return [];
+    }
+}
+
+/**
+ * Obtiene llamadas recientes para el dashboard
+ */
+export async function getRecentCalls(limit: number = 20) {
+    try {
+        const { data, error } = await supabase
+            .from('call_records')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return data as CallRecord[];
+    } catch (error) {
+        console.error('Error getting recent calls:', error);
         return [];
     }
 }
@@ -389,6 +426,148 @@ export async function getCallNotes(callRecordId: string) {
     } catch (error) {
         console.error('Error getting call notes:', error);
         return [];
+    }
+}
+
+// ============================================================================
+// IVR SCRIPT OPERATIONS
+// ============================================================================
+
+export interface IVRScript {
+    id: string;
+    name: string;
+    description?: string;
+    language: string;
+    welcome_message: string;
+    script_data: any;
+    active: boolean;
+    version: number;
+    created_at: string;
+    updated_at: string;
+}
+
+/**
+ * Obtiene todos los scripts IVR
+ */
+export async function getIVRScripts() {
+    try {
+        const { data, error } = await supabase
+            .from('ivr_scripts')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data as IVRScript[];
+    } catch (error) {
+        console.error('Error getting IVR scripts:', error);
+        return [];
+    }
+}
+
+/**
+ * Obtiene un script IVR por ID
+ */
+export async function getIVRScript(id: string) {
+    try {
+        const { data, error } = await supabase
+            .from('ivr_scripts')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) throw error;
+        return data as IVRScript;
+    } catch (error) {
+        console.error('Error getting IVR script:', error);
+        return null;
+    }
+}
+
+/**
+ * Crea un nuevo script IVR
+ */
+export async function createIVRScript(scriptData: Partial<IVRScript>) {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        const { data, error } = await supabase
+            .from('ivr_scripts')
+            .insert([{
+                ...scriptData,
+                created_by: user?.id,
+                version: 1,
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data as IVRScript;
+    } catch (error) {
+        console.error('Error creating IVR script:', error);
+        throw error;
+    }
+}
+
+/**
+ * Actualiza un script IVR
+ */
+export async function updateIVRScript(id: string, updates: Partial<IVRScript>) {
+    try {
+        const { data, error } = await supabase
+            .from('ivr_scripts')
+            .update({
+                ...updates,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data as IVRScript;
+    } catch (error) {
+        console.error('Error updating IVR script:', error);
+        throw error;
+    }
+}
+
+/**
+ * Elimina un script IVR
+ */
+export async function deleteIVRScript(id: string) {
+    try {
+        const { error } = await supabase
+            .from('ivr_scripts')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Error deleting IVR script:', error);
+        throw error;
+    }
+}
+
+// ============================================================================
+// STATS OPERATIONS
+// ============================================================================
+
+/**
+ * Obtiene estadísticas completas del call center
+ */
+export async function getCallCenterStatsComplete() {
+    try {
+        const { data, error } = await supabase
+            .from('call_center_stats')
+            .select('*')
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error getting call center stats:', error);
+        return null;
     }
 }
 

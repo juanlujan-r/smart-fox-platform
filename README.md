@@ -51,7 +51,7 @@ Abre [http://localhost:3000](http://localhost:3000)
 ✅ **Gestión de RH** - Asistencia, Horarios, Solicitudes, Nómina  
 ✅ **Sistema de Inventario** - Gestión de productos y stock  
 ✅ **Punto de Venta (POS)** - Órdenes de compra  
-✅ **Centro de Llamadas (Call Center)** - IVR, CRM, grabación de llamadas (NEW!)  
+✅ **Centro de Llamadas (Call Center)** - IVR, CRM, grabación, estadísticas, gráficas, reportes y alertas  
 ✅ **Dashboard en Tiempo Real** - KPIs y análisis del equipo  
 ✅ **Row-Level Security** - Seguridad a nivel de BD  
 ✅ **TypeScript** - Seguridad de tipos completa  
@@ -79,6 +79,8 @@ Abre [http://localhost:3000](http://localhost:3000)
 - **Autenticación**: Supabase Auth con JWT
 - **Almacenamiento**: Supabase Storage
 - **Herramientas**: Supabase CLI v2.75.5, ESLint, Prettier
+- **Gráficas y Reportes**: Recharts, XLSX
+- **Telefonía**: Twilio
 
 ---
 
@@ -108,14 +110,18 @@ smart-fox-platform/
 
 ---
 
-## 🆕 Centro de Llamadas (Call Center) - NEW!
+## 🆕 Centro de Llamadas (Call Center)
 
 Sistema profesional de call center integrado con:
 
 - **☎️ Llamadas Entrantes y Salientes** con Twilio
 - **🎙️ IVR (Respuesta Interactiva de Voz)** configurable
-- **📇 CRM integrado** para gestión de contactos
+- **📇 CRM integrado** con historial y filtros avanzados
 - **🎙️ Grabación automática** de llamadas
+- **📊 Estadísticas en tiempo real** y panel configurable
+- **📈 Gráficas de desempeño** y estado de llamadas
+- **📤 Reportes en Excel** bajo demanda y programados (local)
+- **⚠️ Alertas configurables** por umbrales de operación
 - **📊 Dashboard supervisor** en tiempo real
 - **🎧 Panel de agente** para recibir/hacer llamadas
 

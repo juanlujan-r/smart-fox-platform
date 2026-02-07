@@ -295,7 +295,7 @@ export default function CallCenterPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
           <div className="flex items-center gap-2 text-gray-600">
             <PhoneMissed className="w-5 h-5 text-red-600" />
-            <span className="text-xs uppercase font-bold tracking-wide">Perdidas</span>
+            <span className="text-xs uppercase font-bold tracking-wide">Pérdidas</span>
           </div>
           <div className="text-3xl font-black text-gray-900 mt-2">{callStats.missed}</div>
         </div>
@@ -304,10 +304,10 @@ export default function CallCenterPage() {
       {(role === 'empleado' || role === 'supervisor') && agentProfile && (
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">OperaciÃ³n</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">Operación</h2>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase">NÃºmero</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">Número</label>
                 <input
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
@@ -337,7 +337,7 @@ export default function CallCenterPage() {
             <h2 className="text-lg font-bold text-gray-900 mb-3">Transferencia</h2>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-gray-500 uppercase">NÃºmero destino</label>
+                <label className="text-xs font-bold text-gray-500 uppercase">Número destino</label>
                 <input
                   value={transferNumber}
                   onChange={(e) => setTransferNumber(e.target.value)}
@@ -387,14 +387,14 @@ export default function CallCenterPage() {
             <h2 className="text-lg font-bold">Historial de llamadas</h2>
           </div>
           {callHistory.length === 0 ? (
-            <p className="text-sm text-gray-500">AÃºn no hay llamadas registradas.</p>
+            <p className="text-sm text-gray-500">Aún no hay llamadas registradas.</p>
           ) : (
             <div className="space-y-2">
               {callHistory.map((c) => (
                 <div key={c.id} className="flex items-center justify-between rounded-xl border border-gray-100 p-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-800">{c.caller_number}</p>
-                    <p className="text-xs text-gray-500">{c.call_status} â€¢ {c.call_direction}</p>
+                    <p className="text-xs text-gray-500">{c.call_status} • {c.call_direction}</p>
                   </div>
                   <div className="text-xs text-gray-500">{c.duration_seconds || 0}s</div>
                 </div>
@@ -419,7 +419,7 @@ export default function CallCenterPage() {
                   <div key={a.id} className="flex items-center justify-between rounded-xl border border-gray-100 p-3">
                     <div>
                       <p className="text-sm font-semibold text-gray-800">Ext. {a.extension}</p>
-                      <p className="text-xs text-gray-500">{a.agent_status} â€¢ llamadas: {a.current_call_count}</p>
+                      <p className="text-xs text-gray-500">{a.agent_status} • llamadas: {a.current_call_count}</p>
                     </div>
                     <span className="text-xs text-gray-500">{a.phone_number || 'sin tel.'}</span>
                   </div>
@@ -441,13 +441,13 @@ export default function CallCenterPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-semibold text-gray-800">{c.caller_number}</p>
-                        <p className="text-xs text-gray-500">{c.call_status} â€¢ {c.queue_name || 'General'}</p>
+                        <p className="text-xs text-gray-500">{c.call_status} • {c.queue_name || 'General'}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-600 text-white"
-                          onClick={() => window.alert('FunciÃ³n de escucha en vivo en configuraciÃ³n.')}
+                          onClick={() => window.alert('Función de escucha en vivo en configuración.')}
                         >
                           Chuzar
                         </button>
@@ -458,7 +458,7 @@ export default function CallCenterPage() {
                             rel="noreferrer"
                             className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#FF8C00] text-white"
                           >
-                            GrabaciÃ³n
+                            Grabación
                           </a>
                         ) : (
                           <button
@@ -482,7 +482,7 @@ export default function CallCenterPage() {
       {role === 'gerente' && (
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900 mb-3">EstadÃ­sticas Generales</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">Estadísticas Generales</h2>
             <p className="text-sm text-gray-600">Indicadores consolidados del centro de llamadas.</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
@@ -513,10 +513,10 @@ export default function CallCenterPage() {
         <section className="bg-gray-900 rounded-2xl p-6 text-white">
           <div className="flex items-center gap-2 mb-2">
             <Headphones className="w-5 h-5 text-orange-300" />
-            <h2 className="text-lg font-bold">OperaciÃ³n en Vivo</h2>
+            <h2 className="text-lg font-bold">Operación en Vivo</h2>
           </div>
           <p className="text-sm text-gray-300">
-            ConexiÃ³n con agentes, enrutamiento y control de llamadas activas.
+            Conexión con agentes, enrutamiento y control de llamadas activas.
           </p>
         </section>
       )}

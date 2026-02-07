@@ -269,7 +269,7 @@ export default function MisTurnosPage() {
     const endM = timeStringToMinutes(exchangeRequest.requested_end_time);
     const durationHours = (endM - startM) / 60;
     if (durationHours > HOURS_MAX_PER_DAY) {
-      return `MÃ¡ximo ${HOURS_MAX_PER_DAY} horas por dÃ­a. Solicitado: ${durationHours.toFixed(1)}h.`;
+      return `Máximo ${HOURS_MAX_PER_DAY} horas por día. Solicitado: ${durationHours.toFixed(1)}h.`;
     }
 
     const reqDate = parseISO(exchangeRequest.requested_date + 'T12:00:00');
@@ -385,7 +385,7 @@ export default function MisTurnosPage() {
               <h3 className="text-lg font-bold text-amber-900">Turnos no asignados</h3>
               <p className="text-sm text-amber-700 mt-2">
                 Como {userRole === 'gerente' ? 'Gerente' : 'Supervisor'}, no tienes turnos asignados actualmente. 
-                Contacta al Departamento de Recursos Humanos para solicitar la asignaciÃ³n de tus turnos.
+                Contacta al Departamento de Recursos Humanos para solicitar la asignación de tus turnos.
               </p>
             </div>
           </div>
@@ -409,7 +409,7 @@ export default function MisTurnosPage() {
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <span className="text-sm font-semibold text-gray-700 min-w-[180px] text-center">
-                {format(weekDays[0], 'd MMM', { locale: es })} â€“ {format(weekDays[6], 'd MMM yyyy', { locale: es })}
+                {format(weekDays[0], 'd MMM', { locale: es })} – {format(weekDays[6], 'd MMM yyyy', { locale: es })}
               </span>
               <button
                 type="button"
@@ -453,7 +453,7 @@ export default function MisTurnosPage() {
                 </p>
                 {sched && schedTimes?.start && schedTimes?.end ? (
                   <div className="mt-2 text-xs text-gray-600">
-                    <p>{schedTimes.start.slice(0, 5)} â€“ {schedTimes.end.slice(0, 5)}</p>
+                    <p>{schedTimes.start.slice(0, 5)} – {schedTimes.end.slice(0, 5)}</p>
                   </div>
                 ) : (
                   <p className="mt-2 text-xs text-gray-400">Sin turno</p>
@@ -473,7 +473,7 @@ export default function MisTurnosPage() {
           <h2 className="text-lg font-bold">Entradas vs Horario</h2>
         </div>
         <p className="text-sm text-gray-500 mb-4">
-          ComparaciÃ³n de tu hora de entrada registrada con el turno programado. Entradas tardÃ­as en rojo.
+          Comparación de tu hora de entrada registrada con el turno programado. Entradas tardías en rojo.
         </p>
         <div className="space-y-2">
           {checkInRecords.length === 0 ? (
@@ -491,7 +491,7 @@ export default function MisTurnosPage() {
                   <span className="text-sm text-gray-600">
                     Entrada: {format(r.entradaAt, 'HH:mm')}
                     {r.scheduledStart && (
-                      <span className="text-gray-500"> Â· Programado: {format(r.scheduledStart, 'HH:mm')}</span>
+                      <span className="text-gray-500"> · Programado: {format(r.scheduledStart, 'HH:mm')}</span>
                     )}
                   </span>
                 </div>
@@ -523,7 +523,7 @@ export default function MisTurnosPage() {
               </button>
             </div>
             <p className="text-xs text-gray-500 mb-4">
-              MÃ¡ximo 10 h por dÃ­a. El nuevo turno debe ser al menos 10 h despuÃ©s del anterior.
+              Máximo 10 h por día. El nuevo turno debe ser al menos 10 h después del anterior.
             </p>
             <div className="space-y-4">
               <label className="block">
@@ -562,7 +562,7 @@ export default function MisTurnosPage() {
                   onChange={(e) => setExchangeRequest((r) => ({ ...r, reason: e.target.value }))}
                   rows={2}
                   className="mt-1 w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none resize-none"
-                  placeholder="Ej. Cita mÃ©dica"
+                  placeholder="Ej. Cita médica"
                 />
               </label>
             </div>
@@ -580,7 +580,7 @@ export default function MisTurnosPage() {
                 disabled={exchangeSubmitting}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-[#FF8C00] text-white font-bold hover:bg-[#e67d00] disabled:opacity-70"
               >
-                {exchangeSubmitting ? 'Enviandoâ€¦' : 'Enviar solicitud'}
+                {exchangeSubmitting ? 'Enviando…' : 'Enviar solicitud'}
               </button>
             </div>
           </div>

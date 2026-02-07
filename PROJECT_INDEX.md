@@ -36,9 +36,10 @@
 | `(dashboard)/inventory/ProductForm.tsx` | Product create/edit form |
 | `(dashboard)/pos/page.tsx` | POS (point of sale) page |
 | `(dashboard)/pos/OrderSummary.tsx` | POS order summary |
+| **(dashboard)/call-center** | Call center (NEW!) |
+| `(dashboard)/call-center/page.tsx` | Call center dashboard with stats, agents, calls |
 | **api** | API routes |
 | `api/auth/check/route.ts` | Auth check endpoint |
-
 ### `src/components/` — React Components
 
 | Component | Role |
@@ -52,6 +53,11 @@
 | `productCar.tsx` | Product car/cart UI (name suggests typo: “Car” vs “Cart”) |
 | `SalesChart.tsx` | Sales chart (likely Recharts) |
 | `ui/ToastContainer.tsx` | Toast notifications container |
+| **call-center/** | Call center components (NEW!) |
+| `call-center/AgentPanel.tsx` | Agent UI for making/receiving calls |
+| `call-center/CallCenterDashboard.tsx` | Supervisor dashboard with analytics, charts, alerts, scheduled reports |
+| `call-center/CRMContactManager.tsx` | Contact management with call history and advanced filters |
+| `call-center/IVRScriptManager.tsx` | IVR menu creator with DB persistence |
 
 ### `src/context/` — React Context
 
@@ -65,6 +71,13 @@
 |------|---------|
 | `cartStore.ts` | POS cart state (items, quantities, totals) |
 
+### `src/hooks/` — Custom React Hooks
+
+| File | Purpose |
+|------|---------|
+| **call-center** | Call center hooks (NEW!) |
+| `call-center/useCallCenter.ts` | Main hook for call management, agent status, CRM |
+
 ### `src/lib/` — Utilities & Supabase
 
 | File | Purpose |
@@ -72,6 +85,10 @@
 | `supabase.ts` | Supabase client (browser) |
 | `supabase/server.ts` | Supabase server client |
 | `supabase/proxy.ts` | Supabase proxy helpers |
+| **call-center** | Call center services (NEW!) |
+| `call-center/supabase.ts` | Call center DB operations (agents, calls, CRM, IVR) |
+| `call-center/twilio.ts` | Twilio integration (calls, recordings, SMS) |
+| `call-center/SETUP_GUIDE.ts` | Call center setup documentation |
 
 ### `src/types/` — TypeScript Types
 
@@ -97,6 +114,7 @@
 - **POS:** `(dashboard)/pos`, `OrderSummary`, `ProductCard`, `cartStore`, `productCar`
 - **Inventory:** `(dashboard)/inventory`, `ProductForm`, `Product` / `Category` types
 - **UI/UX:** `ToastContext`, `ToastContainer`, `globals.css`, Tailwind
+- **Call Center (NEW!):** `(dashboard)/call-center`, `AgentPanel`, `CallCenterDashboard` (alertas, reportes, gráficas), `CRMContactManager` (filtros avanzados), `IVRScriptManager`, `useCallCenter`, `call-center/supabase`, `call-center/twilio`
 
 ---
 

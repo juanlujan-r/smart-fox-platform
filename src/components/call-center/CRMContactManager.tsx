@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as supabaseService from '@/lib/call-center/supabase';
 import { CRMContact } from '@/lib/call-center/supabase';
 
@@ -16,6 +16,13 @@ export function CRMContactManager() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [callHistory, setCallHistory] = useState<any[]>([]);
+    const [filteredCallHistory, setFilteredCallHistory] = useState<any[]>([]);
+    const [statusFilter, setStatusFilter] = useState<string>('');
+    const [typeFilter, setTypeFilter] = useState<string>('');
+    const [dateStart, setDateStart] = useState<string>('');
+    const [dateEnd, setDateEnd] = useState<string>('');
+    const [callSearchQuery, setCallSearchQuery] = useState<string>('');
 
     // Form fields
     const [editMode, setEditMode] = useState(false);
@@ -42,11 +49,62 @@ export function CRMContactManager() {
         }
     };
 
-    const handleSelectContact = (contact: CRMContact) => {
+    const handleSelectContact = async (contact: CRMContact) => {
         setSelectedContact(contact);
         setFormData(contact);
         setEditMode(false);
+        setStatusFilter('');
+        setTypeFilter('');
+        setDateStart('');
+        setDateEnd('');
+        setCallSearchQuery('');
+
+        // Load call history for this contact
+        try {
+            const history = await supabaseService.getContactCallHistory(contact.id);
+            setCallHistory(history);
+        } catch (err) {
+            console.error('Error loading call history:', err);
+        }
     };
+
+    useEffect(() => {
+        let filtered = callHistory;
+
+        // Filter by status
+        if (statusFilter) {
+            filtered = filtered.filter(c => c.call_status === statusFilter);
+        }
+
+        // Filter by type
+        if (typeFilter) {
+            filtered = filtered.filter(c => c.call_direction === typeFilter);
+        }
+
+        // Filter by date range
+        if (dateStart) {
+            const startDate = new Date(dateStart);
+            startDate.setHours(0, 0, 0, 0);
+            filtered = filtered.filter(c => new Date(c.created_at) >= startDate);
+        }
+
+        if (dateEnd) {
+            const endDate = new Date(dateEnd);
+            endDate.setHours(23, 59, 59, 999);
+            filtered = filtered.filter(c => new Date(c.created_at) <= endDate);
+        }
+
+        // Text search in notes/number/status
+        if (callSearchQuery.trim()) {
+            const query = callSearchQuery.toLowerCase();
+            filtered = filtered.filter(c => {
+                const haystack = `${c.caller_number || ''} ${c.notes || ''} ${c.call_status || ''}`.toLowerCase();
+                return haystack.includes(query);
+            });
+        }
+
+        setFilteredCallHistory(filtered);
+    }, [callHistory, statusFilter, typeFilter, dateStart, dateEnd, callSearchQuery]);
 
     const handleSaveContact = async () => {
         if (!selectedContact) return;
@@ -290,11 +348,143 @@ export function CRMContactManager() {
 
                                 {/* Recent calls */}
                                 <div className="p-6 border-t border-gray-200">
-                                    <h3 className="font-bold text-gray-900 mb-4">📞 Llamadas Recientes</h3>
-                                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                                        {/* Call history would be loaded here */}
-                                        <p className="text-gray-500 text-sm">Carga las llamadas del contacto</p>
+                                    <h3 className="font-bold text-gray-900 mb-4">
+                                        📞 Historial de Llamadas ({callHistory.length})
+                                    </h3>
+
+                                    {/* Filters */}
+                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+                                        <input
+                                            type="text"
+                                            value={callSearchQuery}
+                                            onChange={(e) => setCallSearchQuery(e.target.value)}
+                                            placeholder="Buscar número, notas o estado..."
+                                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                        />
+                                        <select
+                                            value={statusFilter}
+                                            onChange={(e) => setStatusFilter(e.target.value)}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                        >
+                                            <option value="">Estado: Todos</option>
+                                            <option value="completed">Completadas</option>
+                                            <option value="active">Activas</option>
+                                            <option value="failed">Fallidas</option>
+                                            <option value="no_answer">No contesta</option>
+                                            <option value="missed">Pérdidas</option>
+                                        </select>
+                                        <select
+                                            value={typeFilter}
+                                            onChange={(e) => setTypeFilter(e.target.value)}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                        >
+                                            <option value="">Tipo: Todos</option>
+                                            <option value="inbound">Entrantes</option>
+                                            <option value="outbound">Salientes</option>
+                                        </select>
+                                        <input
+                                            type="date"
+                                            value={dateStart}
+                                            onChange={(e) => setDateStart(e.target.value)}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                        />
+                                        <input
+                                            type="date"
+                                            value={dateEnd}
+                                            onChange={(e) => setDateEnd(e.target.value)}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                        />
                                     </div>
+
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-xs text-gray-500">
+                                            Mostrando {filteredCallHistory.length} de {callHistory.length} llamadas
+                                        </p>
+                                        <button
+                                            onClick={() => {
+                                                setStatusFilter('');
+                                                setTypeFilter('');
+                                                setDateStart('');
+                                                setDateEnd('');
+                                                setCallSearchQuery('');
+                                            }}
+                                            className="text-xs text-blue-600 hover:text-blue-800"
+                                        >
+                                            Limpiar filtros
+                                        </button>
+                                    </div>
+
+                                    {filteredCallHistory.length === 0 ? (
+                                        <div className="text-center py-8 text-gray-500">
+                                            <p>{statusFilter || typeFilter || dateStart || dateEnd || callSearchQuery ? 'No hay llamadas que coincidan con los filtros' : 'No hay llamadas registradas para este contacto'}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                            <div className="max-h-64 overflow-y-auto">
+                                                <table className="min-w-full">
+                                                    <thead className="bg-gray-50 sticky top-0">
+                                                        <tr>
+                                                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                                                                Fecha
+                                                            </th>
+                                                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                                                                Tipo
+                                                            </th>
+                                                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                                                                Duración
+                                                            </th>
+                                                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                                                                Estado
+                                                            </th>
+                                                            <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">
+                                                                Notas
+                                                            </th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-200">
+                                                        {filteredCallHistory.map((call: any) => (
+                                                            <tr key={call.id} className="hover:bg-gray-50">
+                                                                <td className="px-4 py-2 text-sm text-gray-600">
+                                                                    {new Date(call.created_at).toLocaleString('es-ES', {
+                                                                        day: '2-digit',
+                                                                        month: 'short',
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit'
+                                                                    })}
+                                                                </td>
+                                                                <td className="px-4 py-2">
+                                                                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                                                        call.call_direction === 'inbound'
+                                                                            ? 'bg-blue-100 text-blue-700'
+                                                                            : 'bg-purple-100 text-purple-700'
+                                                                    }`}>
+                                                                        {call.call_direction === 'inbound' ? '📥 Entrante' : '📤 Saliente'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-2 text-sm text-gray-900">
+                                                                    {Math.floor(call.duration_seconds / 60)}:{(call.duration_seconds % 60).toString().padStart(2, '0')}
+                                                                </td>
+                                                                <td className="px-4 py-2">
+                                                                    <span className={`px-2 py-1 rounded text-xs ${
+                                                                        call.call_status === 'completed'
+                                                                            ? 'bg-green-100 text-green-700'
+                                                                            : call.call_status === 'active'
+                                                                            ? 'bg-yellow-100 text-yellow-700'
+                                                                            : 'bg-gray-100 text-gray-700'
+                                                                    }`}>
+                                                                        {call.call_status}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-2 text-xs text-gray-600 max-w-xs truncate">
+                                                                    {call.notes || '-'}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
