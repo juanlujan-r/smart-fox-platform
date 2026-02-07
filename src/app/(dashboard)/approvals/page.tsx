@@ -74,7 +74,6 @@ function ApprovalsPageContent() {
         return;
       }
 
-      setUserRole(profileData.role);
       await fetchRequests();
     };
 
