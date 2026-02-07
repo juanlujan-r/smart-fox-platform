@@ -22,7 +22,7 @@ export default function DashboardLayout({
           </div>
           
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto pb-24 md:pb-6 bg-gray-50">
+          <main className="flex-1 overflow-y-auto pb-16 md:pb-4 bg-gray-50">
             {children}
           </main>
         </div>
