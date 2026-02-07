@@ -46,12 +46,12 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-[#1a202c] h-screen flex flex-col p-4 border-r border-gray-800 sticky top-0">
-      <div className="flex items-center justify-center mb-8 px-2 pt-2">
+      <div className="flex items-center justify-center mb-4 px-2 pt-2">
         <Image 
           src="/logo.png" 
           alt="SmartFox ERP" 
-          width={180} 
-          height={90}
+          width={90} 
+          height={45}
           className="object-contain"
           priority
         />

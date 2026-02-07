@@ -27,7 +27,7 @@ import PayrollGenerator from '@/components/hr/PayrollGenerator';
 
 const BUCKET = 'hr-attachments';
 
-type ProfileWithRole = { id: string; role?: string; personal_data?: PersonalData | null };
+type ProfileWithRole = { id: string; role?: string; full_name?: string | null; personal_data?: PersonalData | null };
 
 const STATE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   entrada: { label: 'Entrada', color: 'text-green-700', bg: 'bg-green-500' },
@@ -51,9 +51,8 @@ function getLogState(log: AttendanceLogRow): string {
 }
 
 function getDisplayName(profile: ProfileWithRole): string {
-  const pd = profile.personal_data;
-  if (pd && typeof pd === 'object' && (pd as PersonalData).fullName) {
-    return (pd as PersonalData).fullName!.trim() || 'Sin nombre';
+  if (profile.full_name && profile.full_name.trim()) {
+    return profile.full_name.trim();
   }
   return 'Sin nombre';
 }
@@ -97,16 +96,19 @@ function GestionEquipoPageContent() {
     const todayStart = `${today}T00:00:00`;
     const todayEnd = `${today}T23:59:59`;
 
-    const [logsRes, logsTodayRes] = await Promise.all([
+    // Nota: loadAttendance también necesita cargar perfiles actualizados
+    const [logsRes, logsTodayRes, freshProfilesRes] = await Promise.all([
       supabase.from('attendance_logs').select('*').order('created_at', { ascending: false }),
       supabase
         .from('attendance_logs')
         .select('user_id, created_at, state, type')
         .gte('created_at', todayStart)
         .lte('created_at', todayEnd),
+      supabase.from('profiles').select('id, role, full_name, personal_data').order('id'),
     ]);
 
     if (logsRes.data) setLogs(logsRes.data as AttendanceLogRow[]);
+    if (freshProfilesRes.data) setProfiles(freshProfilesRes.data as ProfileWithRole[]);
 
     const todayLogs = (logsTodayRes.data ?? []) as AttendanceLogRow[];
     const todayEntradaUserIds = new Set<string>();
@@ -140,7 +142,7 @@ function GestionEquipoPageContent() {
         }
 
         const [profilesRes, logsRes, requestsRes, schedulesRes, logsTodayRes] = await Promise.all([
-          supabase.from('profiles').select('id, role, personal_data').order('id'),
+          supabase.from('profiles').select('id, role, full_name, personal_data').order('id'),
           supabase
             .from('attendance_logs')
             .select('*')
