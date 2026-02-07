@@ -69,6 +69,10 @@ export default function CallCenterPage() {
   const [callHistory, setCallHistory] = useState<CallRecord[]>([]);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [transferNumber, setTransferNumber] = useState('');
+  const [showAgentModal, setShowAgentModal] = useState(false);
+  const [employeesWithoutAgent, setEmployeesWithoutAgent] = useState<any[]>([]);
+  const [selectedEmployee, setSelectedEmployee] = useState<string>('');
+  const [assignedPhone, setAssignedPhone] = useState('+18789997381');
 
   useEffect(() => {
     const loadRole = async () => {
@@ -204,11 +208,44 @@ export default function CallCenterPage() {
     return map[role] ?? role;
   }, [role]);
 
-  const createAgent = async () => {
-    if (!userId) return;
+  const loadEmployeesWithoutAgent = async () => {
     try {
-      const ext = userId.replace(/-/g, '').slice(-4);
-      await createAgentProfile(userId, ext || '1000', { general: true });
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, personal_data')
+        .limit(100);
+
+      if (!profiles) return;
+
+      const { data: agents } = await supabase
+        .from('call_center_agents')
+        .select('user_id');
+
+      const agentUserIds = new Set(agents?.map(a => a.user_id) || []);
+      const available = profiles.filter(p => !agentUserIds.has(p.id));
+      setEmployeesWithoutAgent(available);
+    } catch (err) {
+      console.error('Error loading employees:', err);
+    }
+  };
+
+  const assignAgentProfile = async () => {
+    if (!selectedEmployee) {
+      setDataError('Selecciona un empleado.');
+      return;
+    }
+    try {
+      const ext = selectedEmployee.replace(/-/g, '').slice(-4);
+      await createAgentProfile(selectedEmployee, ext, { general: true });
+      
+      // Update phone_number in agent profile
+      await supabase
+        .from('call_center_agents')
+        .update({ phone_number: assignedPhone })
+        .eq('user_id', selectedEmployee);
+
+      setShowAgentModal(false);
+      setSelectedEmployee('');
       window.location.reload();
     } catch (err) {
       console.error('Error creating agent profile:', err);
@@ -259,19 +296,26 @@ export default function CallCenterPage() {
         </div>
       )}
 
-      {!agentProfile && role === 'gerente' && (
+      {role === 'gerente' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h2 className="text-lg font-bold text-gray-900">Activar perfil de agente</h2>
-          <p className="text-sm text-gray-600 mt-2">
-            Para hacer/recibir/transferir llamadas debes tener un perfil de agente.
-          </p>
-          <button
-            type="button"
-            onClick={createAgent}
-            className="mt-4 bg-[#FF8C00] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-orange-600"
-          >
-            Crear perfil de agente
-          </button>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Gestión de Agentes</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Asigna números de teléfono a empleados para habilitar el panel de llamadas.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                loadEmployeesWithoutAgent();
+                setShowAgentModal(true);
+              }}
+              className="bg-[#FF8C00] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-orange-600"
+            >
+              Asignar Agente
+            </button>
+          </div>
         </div>
       )}
 
@@ -525,6 +569,78 @@ export default function CallCenterPage() {
             Conexión con agentes, enrutamiento y control de llamadas activas.
           </p>
         </section>
+      )}
+
+      {/* Agent Assignment Modal */}
+      {showAgentModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Asignar Agente</h2>
+              <button
+                type="button"
+                onClick={() => setShowAgentModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Seleccionar Empleado
+                </label>
+                <select
+                  value={selectedEmployee}
+                  onChange={(e) => setSelectedEmployee(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none"
+                >
+                  <option value="">-- Selecciona un empleado --</option>
+                  {employeesWithoutAgent.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.full_name || emp.personal_data?.email || 'Sin nombre'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Número de Teléfono Asignado
+                </label>
+                <input
+                  type="text"
+                  value={assignedPhone}
+                  onChange={(e) => setAssignedPhone(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#FF8C00]/40 outline-none"
+                  placeholder="+18789997381"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Este es el número de Twilio que el agente usará para hacer llamadas.
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAgentModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={assignAgentProfile}
+                  disabled={!selectedEmployee}
+                  className="flex-1 bg-[#FF8C00] text-white px-4 py-2.5 rounded-xl font-bold hover:bg-orange-600 disabled:opacity-50"
+                >
+                  Asignar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

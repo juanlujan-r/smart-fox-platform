@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Bell, Search, User, PhoneCall, X } from 'lucide-react';
+import { Bell, Search, User, PhoneCall, X, FileText, Calendar, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useEmployeeModal } from '@/context/EmployeeModalContext';
 
@@ -30,8 +30,10 @@ export default function TopBar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSearch, setShowSearch] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const { openModal } = useEmployeeModal();
 
   useEffect(() => {
@@ -131,6 +133,9 @@ export default function TopBar() {
       }
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
         setShowSearch(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
       }
     };
 
@@ -256,14 +261,59 @@ export default function TopBar() {
         </Link>
 
         {/* User Info */}
-        <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-sm font-semibold text-gray-900">{userName}</span>
-            <span className="text-xs text-gray-500">{getRoleLabel(userRole)}</span>
-          </div>
-          <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-            <User className="w-5 h-5 text-white" />
-          </div>
+        <div className="relative" ref={userMenuRef}>
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-3 pl-3 border-l border-gray-200 hover:bg-gray-50 rounded-lg p-2 transition"
+          >
+            <div className="hidden md:flex flex-col items-end">
+              <span className="text-sm font-semibold text-gray-900">{userName}</span>
+              <span className="text-xs text-gray-500">{getRoleLabel(userRole)}</span>
+            </div>
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </div>
+          </button>
+
+          {/* User Dropdown Menu */}
+          {showUserMenu && (
+            <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+              <div className="p-2">
+                <Link
+                  href="/profile/edit"
+                  className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition text-gray-700"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <User className="w-4 h-4" />
+                  <span className="text-sm font-medium">Perfil</span>
+                </Link>
+                <Link
+                  href="/profile/info"
+                  className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition text-gray-700"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span className="text-sm font-medium">Mi Información</span>
+                </Link>
+                <Link
+                  href="/profile/absences"
+                  className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition text-gray-700"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm font-medium">Mis Faltas</span>
+                </Link>
+                <Link
+                  href="/profile/settings"
+                  className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition text-gray-700"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="text-sm font-medium">Configuración</span>
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

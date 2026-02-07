@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Calendar, FileText, UserCircle, Users, BarChart3, LayoutDashboard, LogOut, CheckCircle, PhoneCall } from 'lucide-react';
+import { Calendar, FileText, UserCircle, Users, BarChart3, LayoutDashboard, LogOut, CheckCircle, PhoneCall, Award, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -41,6 +41,8 @@ export default function Sidebar() {
     { name: 'Mi Información', icon: UserCircle, path: '/profile', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Aprobar Solicitudes', icon: CheckCircle, path: '/approvals', roles: ['supervisor', 'gerente'] },
     { name: 'Gestión RRHH', icon: Users, path: '/hr-management', roles: ['supervisor', 'gerente'] },
+    { name: 'Gestión de Bonos', icon: Award, path: '/bonuses', roles: ['supervisor', 'gerente'] },
+    { name: 'Gestión de Salarios', icon: DollarSign, path: '/salary-management', roles: ['gerente'] },
     { name: 'Dashboard Gerencial', icon: BarChart3, path: '/admin', roles: ['gerente'] },
   ];
 
