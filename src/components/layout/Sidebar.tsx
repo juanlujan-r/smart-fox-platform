@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Calendar, FileText, UserCircle, Users, BarChart3, LayoutDashboard, LogOut, CheckCircle } from 'lucide-react';
+import { Calendar, FileText, UserCircle, Users, BarChart3, LayoutDashboard, LogOut, CheckCircle, PhoneCall } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -36,6 +36,7 @@ export default function Sidebar() {
   const menu = [
     { name: 'Panel Principal', icon: LayoutDashboard, path: '/dashboard', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Mis Turnos', icon: Calendar, path: '/shifts', roles: ['empleado', 'supervisor', 'gerente'] },
+    { name: 'Centro de Llamadas', icon: PhoneCall, path: '/call-center', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Reportar/Solicitar', icon: FileText, path: '/requests', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Mi Información', icon: UserCircle, path: '/profile', roles: ['empleado', 'supervisor', 'gerente'] },
     { name: 'Aprobar Solicitudes', icon: CheckCircle, path: '/approvals', roles: ['supervisor', 'gerente'] },
