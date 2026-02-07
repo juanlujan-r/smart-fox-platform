@@ -146,6 +146,117 @@ export const translations = {
     export: "Exportar",
     import: "Importar",
     required: "requerido",
+    
+    // Login Page
+    enterSystem: "Entrar al Sistema",
+    verifying: "Verificando...",
+    copyrightSmartFox: "© {{year}} Smart Fox Solutions S.A.S",
+    
+    // Dashboard
+    loadingDashboard: "Cargando dashboard...",
+    onShift: "En turno",
+    onBreak: "Descanso",
+    lunch: "Almuerzo",
+    meeting: "Reunión",
+    offShift: "Fuera de turno",
+    unknownStatus: "Estado desconocido",
+    accessStats: "Estadísticas de Acceso",
+    hoursWorked: "Horas trabajadas, calendario y solicitud de cambios",
+    
+    // Shifts Page
+    myShifts: "Mis Turnos",
+    hoursWorkedDesc: "Horas trabajadas, calendario y solicitud de cambios",
+    weeklyView: "Vista Semanal",
+    shiftChangeRequest: "Solicitar Cambio de Turno",
+    desiredDate: "Fecha deseada",
+    maxTenHoursDay: "Máximo 10 h por día. El nuevo turno debe ser al menos 10 h después del anterior.",
+    
+    // Requests Page
+    requestType: "Tipo de Solicitud",
+    permission: "Permiso",
+    license: "Licencia",
+    novelty: "Novedad",
+    vacation: "Vacaciones",
+    disability: "Incapacidad",
+    requestDetails: "Detalles de la Solicitud",
+    attachFile: "Adjuntar Archivo",
+    noAuthenticatedUser: "No usuario autenticado",
+    
+    // Approvals Page
+    approvalOfRequests: "Aprobación de Solicitudes",
+    manageAndAuthorize: "Gestiona y autoriza solicitudes de empleados",
+    pending: "Pendiente",
+    approved: "Aprobado",
+    rejected: "Rechazado",
+    withdrawn: "Retirado",
+    submitRequest: "Enviar Solicitud",
+    updateStatus: "Actualizar Estado",
+    
+    // HR Management
+    teamManagement: "Gestión de Equipo",
+    teamHierarchy: "Jerarquía del Equipo",
+    directTeam: "Equipo Directo",
+    notifyAbsence: "Notificar Ausencia",
+    requestType: "Tipo de Solicitud",
+    attachment: "Adjunto",
+    openAttachment: "Abrir Adjunto",
+    timeSpent: "Tiempo Transcurrido",
+    overLimit: "Límite Excedido",
+    
+    // Call Center
+    callCenter: "Centro de Llamadas",
+    customization: "⚙️ Personalizar Dashboard",
+    visibility: "Visibilidad",
+    statistics: "Estadísticas",
+    graphs: "Gráficas",
+    agents: "Agentes",
+    calls: "Llamadas",
+    alerts: "Alertas",
+    reports: "Reportes",
+    daily: "Diario",
+    weekly: "Semanal",
+    hour: "Hora",
+    generateReportNow: "Generar reporte ahora",
+    
+    // Bonuses Edit Form
+    addNewBonus: "Agregar Bono",
+    editBonus: "Editar Bono",
+    bonusesWillBePaidNextPayroll: "Los bonos se pagarán en la próxima fecha de nómina",
+    fixedAmount: "Monto Fijo",
+    fixedAmountDesc: "Valor específico en COP",
+    percentageAmount: "Porcentaje",
+    estimatedBonusAmount: "Monto Total del Bono:",
+    descriptionReason: "Descripción / Motivo",
+    successMessage: "exitosamente",
+    errorMessage: "Error",
+    
+    // Profile Tabs
+    personalData: "Datos Personales",
+    legalInfo: "Información Legal",
+    medicalInfo: "Información Médica",
+    bankingData: "Datos Bancarios",
+    uniformSizes: "Tallas de Dotación",
+    
+    // All Pages - Buttons
+    back: "Volver",
+    goBack: "Atrás",
+    print: "Imprimir",
+    printSaveAssPDF: "Imprimir / Guardar como PDF",
+    savePDFInstructions: "Usa la opción \"Guardar como PDF\" de tu navegador.",
+    
+    // Certificate
+    certificateNumber: "Número de Certificado",
+    contractType: "Tipo de Contrato",
+    indefinite: "Indefinido",
+    fixedTerm: "Término Fijo",
+    workOrLabor: "Obra o Labor",
+    
+    // Common Status Messages
+    successfullyAdded: "agregado exitosamente",
+    updatedSuccessfully: "actualizado exitosamente",
+    deletedSuccessfully: "eliminado exitosamente",
+    savingData: "Guardando...",
+    processingData: "Procesando...",
   },
   en: {
     // Navigation
@@ -293,6 +404,117 @@ export const translations = {
     export: "Export",
     import: "Import",
     required: "required",
+    
+    // Login Page
+    enterSystem: "Enter System",
+    verifying: "Verifying...",
+    copyrightSmartFox: "© {{year}} Smart Fox Solutions S.A.S",
+    
+    // Dashboard
+    loadingDashboard: "Loading dashboard...",
+    onShift: "On Shift",
+    onBreak: "Break",
+    lunch: "Lunch",
+    meeting: "Meeting",
+    offShift: "Off Shift",
+    unknownStatus: "Unknown Status",
+    accessStats: "Access Statistics",
+    hoursWorked: "Hours worked, calendar and shift change requests",
+    
+    // Shifts Page
+    myShifts: "My Shifts",
+    hoursWorkedDesc: "Hours worked, calendar and shift change requests",
+    weeklyView: "Weekly View",
+    shiftChangeRequest: "Request Shift Change",
+    desiredDate: "Desired Date",
+    maxTenHoursDay: "Maximum 10 hours per day. New shift must be at least 10 hours after the previous one.",
+    
+    // Requests Page
+    requestType: "Request Type",
+    permission: "Permission",
+    license: "License",
+    novelty: "Novelty",
+    vacation: "Vacation",
+    disability: "Disability",
+    requestDetails: "Request Details",
+    attachFile: "Attach File",
+    noAuthenticatedUser: "No authenticated user",
+    
+    // Approvals Page
+    approvalOfRequests: "Request Approval",
+    manageAndAuthorize: "Manage and authorize employee requests",
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected",
+    withdrawn: "Withdrawn",
+    submitRequest: "Submit Request",
+    updateStatus: "Update Status",
+    
+    // HR Management
+    teamManagement: "Team Management",
+    teamHierarchy: "Team Hierarchy",
+    directTeam: "Direct Team",
+    notifyAbsence: "Notify Absence",
+    requestType: "Request Type",
+    attachment: "Attachment",
+    openAttachment: "Open Attachment",
+    timeSpent: "Time Spent",
+    overLimit: "Over Limit",
+    
+    // Call Center
+    callCenter: "Call Center",
+    customization: "⚙️ Customize Dashboard",
+    visibility: "Visibility",
+    statistics: "Statistics",
+    graphs: "Graphs",
+    agents: "Agents",
+    calls: "Calls",
+    alerts: "Alerts",
+    reports: "Reports",
+    daily: "Daily",
+    weekly: "Weekly",
+    hour: "Hour",
+    generateReportNow: "Generate report now",
+    
+    // Bonuses Edit Form
+    addNewBonus: "Add Bonus",
+    editBonus: "Edit Bonus",
+    bonusesWillBePaidNextPayroll: "Bonuses will be paid on the next payroll date",
+    fixedAmount: "Fixed Amount",
+    fixedAmountDesc: "Specific value in COP",
+    percentageAmount: "Percentage",
+    estimatedBonusAmount: "Total Bonus Amount:",
+    descriptionReason: "Description / Reason",
+    successMessage: "successfully",
+    errorMessage: "Error",
+    
+    // Profile Tabs
+    personalData: "Personal Data",
+    legalInfo: "Legal Information",
+    medicalInfo: "Medical Information",
+    bankingData: "Banking Data",
+    uniformSizes: "Uniform Sizes",
+    
+    // All Pages - Buttons
+    back: "Back",
+    goBack: "Go Back",
+    print: "Print",
+    printSaveAssPDF: "Print / Save as PDF",
+    savePDFInstructions: "Use your browser's \"Save as PDF\" option.",
+    
+    // Certificate
+    certificateNumber: "Certificate Number",
+    contractType: "Contract Type",
+    indefinite: "Indefinite",
+    fixedTerm: "Fixed Term",
+    workOrLabor: "Work or Labor",
+    
+    // Common Status Messages
+    successfullyAdded: "added successfully",
+    updatedSuccessfully: "updated successfully",
+    deletedSuccessfully: "deleted successfully",
+    savingData: "Saving...",
+    processingData: "Processing...",
   },
 };
 

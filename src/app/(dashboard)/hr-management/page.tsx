@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from '@/hooks/useTranslation';
 import RoleGuard from '@/components/RoleGuard';
 import { useToast } from '@/context/ToastContext';
 import { format, parseISO, isBefore, addMinutes } from 'date-fns';
@@ -32,19 +33,19 @@ type ProfileWithRole = { id: string; role?: string; full_name?: string | null; p
 
 const STATE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   entrada: { label: 'Entrada', color: 'text-green-700', bg: 'bg-green-500' },
-  descanso: { label: 'Descanso', color: 'text-amber-700', bg: 'bg-amber-500' },
-  almuerzo: { label: 'Almuerzo', color: 'text-blue-700', bg: 'bg-blue-500' },
-  reunion: { label: 'Reunión', color: 'text-purple-700', bg: 'bg-purple-500' },
+  descanso: { label: 'Break', color: 'text-amber-700', bg: 'bg-amber-500' },
+  almuerzo: { label: 'Lunch', color: 'text-blue-700', bg: 'bg-blue-500' },
+  reunion: { label: 'Meeting', color: 'text-purple-700', bg: 'bg-purple-500' },
   offline: { label: 'Offline', color: 'text-gray-600', bg: 'bg-gray-500' },
   salida: { label: 'Salida', color: 'text-gray-600', bg: 'bg-gray-500' },
 };
 
 const REQUEST_TYPE_LABELS: Record<string, string> = {
-  permiso: 'Permiso',
-  licencia: 'Licencia',
-  novedad: 'Novedad',
-  vacaciones: 'Vacaciones',
-  incapacidad: 'Incapacidad',
+  permiso: 'Permission',
+  licencia: 'License',
+  novedad: 'Novelty',
+  vacaciones: 'Vacation',
+  incapacidad: 'Disability',
 };
 
 function getLogState(log: AttendanceLogRow): string {

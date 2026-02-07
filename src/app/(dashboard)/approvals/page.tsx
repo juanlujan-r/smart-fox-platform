@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from '@/hooks/useTranslation';
 import RoleGuard from '@/components/RoleGuard';
 import { 
   CheckCircle2, 
@@ -38,13 +39,14 @@ const REQUEST_TYPES: { [key: string]: string } = {
 };
 
 const STATUS_CONFIG = {
-  'pendiente': { label: 'Pendiente', color: 'yellow', icon: Clock },
-  'aprobado': { label: 'Aprobado', color: 'green', icon: CheckCircle2 },
-  'rechazado': { label: 'Rechazado', color: 'red', icon: XCircle },
-  'retirado': { label: 'Retirado', color: 'gray', icon: AlertCircle },
+  'pendiente': { label: 'Pending', color: 'yellow', icon: Clock },
+  'aprobado': { label: 'Approved', color: 'green', icon: CheckCircle2 },
+  'rechazado': { label: 'Rejected', color: 'red', icon: XCircle },
+  'retirado': { label: 'Withdrawn', color: 'gray', icon: AlertCircle },
 };
 
 function ApprovalsPageContent() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [requests, setRequests] = useState<Request[]>([]);
@@ -243,8 +245,8 @@ function ApprovalsPageContent() {
     <div className="max-w-6xl mx-auto pb-20 px-6 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-black text-gray-900">Aprobación de Solicitudes</h1>
-        <p className="text-gray-600 mt-2">Gestiona y autoriza solicitudes de empleados</p>
+        <h1 className="text-4xl font-black text-gray-900">{t('approvalOfRequests')}</h1>
+        <p className="text-gray-600 mt-2">{t('manageAndAuthorize')}</p>
       </div>
 
       {/* Tabs */}

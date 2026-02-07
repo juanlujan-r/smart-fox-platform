@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { Clock, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from '@/hooks/useTranslation';
 import ShiftControl from '@/components/hr/ShiftControl';
 import ManagerDashboard from '@/components/dashboard/ManagerDashboard';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employeeName, setEmployeeName] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -215,7 +217,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg font-medium">Cargando dashboard...</p>
+          <p className="text-gray-600 text-lg font-medium">{t('loadingDashboard')}</p>
         </div>
       </div>
     );
@@ -223,11 +225,11 @@ export default function Dashboard() {
 
   // Universal view - all roles see ShiftControl + role-specific widgets
   const stateLabels: Record<string, string> = {
-    entrada: 'En turno',
-    descanso: 'Descanso',
-    almuerzo: 'Almuerzo',
-    reunion: 'Reunión',
-    offline: 'Fuera de turno',
+    entrada: t('onShift'),
+    descanso: t('onBreak'),
+    almuerzo: t('lunch'),
+    reunion: t('meeting'),
+    offline: t('offShift'),
   };
 
   const minutes = Math.floor(elapsedMs / 60000);

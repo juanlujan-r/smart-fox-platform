@@ -195,14 +195,14 @@ export default function BonusFormPage() {
           className="flex items-center gap-2 text-[#FF8C00] hover:text-orange-600 mb-6 font-semibold"
         >
           <ArrowLeft className="w-4 h-4" />
-          Volver
+          {t('back')}
         </Link>
 
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          {bonusId && bonusId !== 'new' ? 'Editar Bono' : 'Agregar Bono'}
+          {bonusId && bonusId !== 'new' ? t('editBonus') : t('addNewBonus')}
         </h1>
         <p className="text-gray-600 mb-6">
-          Los bonos se pagarán en la próxima fecha de nómina
+          {t('bonusesWillBePaidNextPayroll')}
         </p>
 
         {message && (
@@ -275,8 +275,8 @@ export default function BonusFormPage() {
                 <DollarSign className={`w-6 h-6 mx-auto mb-2 ${
                   calculationType === 'fixed' ? 'text-[#FF8C00]' : 'text-gray-400'
                 }`} />
-                <p className="font-semibold text-sm">Monto Fijo</p>
-                <p className="text-xs text-gray-500 mt-1">Valor específico en COP</p>
+                <p className="font-semibold text-sm">{t('fixedAmount')}</p>
+                <p className="text-xs text-gray-500 mt-1">{t('fixedAmountDesc')}</p>
               </button>
               <button
                 type="button"
@@ -291,7 +291,7 @@ export default function BonusFormPage() {
                 <Percent className={`w-6 h-6 mx-auto mb-2 ${
                   calculationType === 'percentage' ? 'text-[#FF8C00]' : 'text-gray-400'
                 }`} />
-                <p className="font-semibold text-sm">Porcentaje</p>
+                <p className="font-semibold text-sm">{t('percentageAmount')}</p>
                 <p className="text-xs text-gray-500 mt-1">% del salario base</p>
               </button>
             </div>
@@ -346,7 +346,7 @@ export default function BonusFormPage() {
           {/* Estimated Amount Display */}
           {estimatedAmount > 0 && (
             <div className="bg-[#FF8C00] bg-opacity-10 border border-[#FF8C00] rounded-lg p-4">
-              <p className="text-sm text-gray-700 mb-1">Monto Total del Bono:</p>
+              <p className="text-sm text-gray-700 mb-1">{t('estimatedBonusAmount')}</p>
               <p className="text-2xl font-bold text-[#FF8C00]">
                 ${estimatedAmount.toLocaleString('es-CO')} COP
               </p>
@@ -356,7 +356,7 @@ export default function BonusFormPage() {
           {/* Description */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Descripción / Motivo
+              {t('descriptionReason')}
             </label>
             <textarea
               value={description}

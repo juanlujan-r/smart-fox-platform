@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from '@/hooks/useTranslation';
 import { 
   User, 
   Heart, 
@@ -310,11 +311,11 @@ export default function ProfilePage() {
         <div className="lg:col-span-1">
           <div className="space-y-2 sticky top-6">
             {[
-              { id: 'personal', label: 'Datos Personales', icon: User },
-              { id: 'legal', label: 'Información Legal', icon: Briefcase },
-              { id: 'medical', label: 'Información Médica', icon: Heart },
-              { id: 'banking', label: 'Datos Bancarios', icon: DollarSign },
-              { id: 'sizes', label: 'Tallas de Dotación', icon: Shirt },
+              { id: 'personal', labelKey: 'personalData', icon: User },
+              { id: 'legal', labelKey: 'legalInfo', icon: Briefcase },
+              { id: 'medical', labelKey: 'medicalInfo', icon: Heart },
+              { id: 'banking', labelKey: 'bankingData', icon: DollarSign },
+              { id: 'sizes', labelKey: 'uniformSizes', icon: Shirt },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -326,7 +327,7 @@ export default function ProfilePage() {
                 }`}
               >
                 <tab.icon className="w-5 h-5" />
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             ))}
           </div>

@@ -6,12 +6,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 import * as supabaseService from '@/lib/call-center/supabase';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import * as XLSX from 'xlsx';
 import { AgentProfile, CallRecord } from '@/lib/call-center/supabase';
 
 export function CallCenterDashboard() {
+    const { t } = useTranslation();
     const [agents, setAgents] = useState<AgentProfile[]>([]);
     const [stats, setStats] = useState<any>(null);
     const [callRecords, setCallRecords] = useState<CallRecord[]>([]);
@@ -306,7 +308,7 @@ export function CallCenterDashboard() {
                 <div className="bg-white rounded-lg shadow mb-8">
                     <div className="border-b border-gray-200 px-6 py-4">
                         <h2 className="text-xl font-bold text-gray-900">
-                            ⚙️ Personalizar Dashboard
+                            {t('customization')}
                         </h2>
                     </div>
                     <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -420,12 +422,12 @@ export function CallCenterDashboard() {
                                             }
                                             className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-lg"
                                         >
-                                            <option value="daily">Diario</option>
-                                            <option value="weekly">Semanal</option>
+                                        <option value="daily">{t('daily')}</option>
+                                        <option value="weekly">{t('weekly')}</option>
                                         </select>
                                     </label>
                                     <label className="block">
-                                        Hora
+                                        {t('hour')}
                                         <input
                                             type="time"
                                             value={reportSchedule.time}
@@ -442,7 +444,7 @@ export function CallCenterDashboard() {
                                         onClick={exportToExcel}
                                         className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg"
                                     >
-                                        Generar reporte ahora
+                                        {t('generateReportNow')}
                                     </button>
                                 </div>
                             </div>

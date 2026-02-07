@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useTranslation } from '@/hooks/useTranslation';
 import { useToast } from '@/context/ToastContext';
 import {
   format,
@@ -81,6 +82,7 @@ function getScheduleTimes(s: ScheduleFlexible): { date: string | null; start: st
 }
 
 export default function MisTurnosPage() {
+  const { t } = useTranslation();
   const { pushToast } = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<'empleado' | 'supervisor' | 'gerente' | null>(null);
@@ -344,8 +346,8 @@ export default function MisTurnosPage() {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6 py-8">
       <header>
-        <h1 className="text-4xl font-black text-gray-900">Mis Turnos</h1>
-        <p className="text-gray-600 mt-2">Horas trabajadas, calendario y solicitud de cambios</p>
+        <h1 className="text-4xl font-black text-gray-900">{t('myShifts')}</h1>
+        <p className="text-gray-600 mt-2">{t('hoursWorkedDesc')}</p>
       </header>
 
       {/* Horas Trabajadas Summary */}
@@ -513,7 +515,7 @@ export default function MisTurnosPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="fox-card max-w-md w-full p-6 shadow-xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">Solicitar Cambio de Turno</h3>
+              <h3 className="text-lg font-bold text-gray-800">{t('shiftChangeRequest')}</h3>
               <button
                 type="button"
                 onClick={() => setShowExchangeModal(false)}
@@ -523,11 +525,11 @@ export default function MisTurnosPage() {
               </button>
             </div>
             <p className="text-xs text-gray-500 mb-4">
-              Máximo 10 h por día. El nuevo turno debe ser al menos 10 h después del anterior.
+              {t('maxTenHoursDay')}
             </p>
             <div className="space-y-4">
               <label className="block">
-                <span className="text-sm font-medium text-gray-600">Fecha deseada</span>
+                <span className="text-sm font-medium text-gray-600">{t('desiredDate')}</span>
                 <input
                   type="date"
                   value={exchangeRequest.requested_date}
