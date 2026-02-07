@@ -85,17 +85,19 @@ export default function TopBar() {
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    if (query.trim().length < 2) {
+    // Validación y sanitización de input
+    const sanitizedQuery = query.trim().replace(/[%_\\]/g, '\\$&');
+    if (sanitizedQuery.length < 2 || sanitizedQuery.length > 50) {
       setSearchResults([]);
       return;
     }
 
     try {
-      // Búsqueda en empleados
+      // Búsqueda en empleados - Solo campos necesarios
       const { data: employees } = await supabase
         .from('profiles')
-        .select('id, full_name, role')
-        .ilike('full_name', `%${query}%`)
+        .select('id, full_name, role, cargo')
+        .ilike('full_name', `%${sanitizedQuery}%`)
         .limit(5);
 
       const results: SearchResult[] = employees?.map(emp => ({

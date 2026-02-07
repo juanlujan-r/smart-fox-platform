@@ -153,11 +153,11 @@ export default function Dashboard() {
             setActualWorkMinutes(totalMinutes);
           }
 
-          // Fetch today's schedule
+          // Fetch today's schedule - Solo campos necesarios
           const todayDate = new Date().toISOString().split('T')[0];
           const { data: schedule, error: scheduleError } = await supabase
             .from('schedules')
-            .select('*')
+            .select('id, user_id, scheduled_date, start_time, end_time, shift_type, start_at')
             .eq('user_id', user.id)
             .eq('scheduled_date', todayDate)
             .single();

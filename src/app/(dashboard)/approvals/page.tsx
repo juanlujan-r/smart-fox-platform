@@ -92,10 +92,10 @@ function ApprovalsPageContent() {
         .eq('id', user.id)
         .single();
 
-      // Fetch all requests
+      // Fetch all requests - Solo campos necesarios
       const { data: requestsData, error } = await supabase
         .from('hr_requests')
-        .select('*')
+        .select('id, user_id, type, title, description, status, start_date, end_date, reason, created_at, updated_at, attachment_url')
         .order('created_at', { ascending: false });
 
       if (error) throw error;

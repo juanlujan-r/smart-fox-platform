@@ -100,13 +100,13 @@ function GestionEquipoPageContent() {
 
     // Nota: loadAttendance también necesita cargar perfiles actualizados
     const [logsRes, logsTodayRes, freshProfilesRes] = await Promise.all([
-      supabase.from('attendance_logs').select('*').order('created_at', { ascending: false }),
+      supabase.from('attendance_logs').select('id, user_id, state, type, created_at, updated_at').order('created_at', { ascending: false }),
       supabase
         .from('attendance_logs')
         .select('user_id, created_at, state, type')
         .gte('created_at', todayStart)
         .lte('created_at', todayEnd),
-      supabase.from('profiles').select('id, role, full_name, personal_data').order('id'),
+      supabase.from('profiles').select('id, role, full_name, cargo, supervisor_id').order('id'),
     ]);
 
     if (logsRes.data) setLogs(logsRes.data as AttendanceLogRow[]);
@@ -144,19 +144,19 @@ function GestionEquipoPageContent() {
         }
 
         const [profilesRes, logsRes, requestsRes, schedulesRes, logsTodayRes] = await Promise.all([
-          supabase.from('profiles').select('id, role, full_name, personal_data').order('id'),
+          supabase.from('profiles').select('id, role, full_name, cargo, supervisor_id').order('id'),
           supabase
             .from('attendance_logs')
-            .select('*')
+            .select('id, user_id, state, type, created_at, updated_at')
             .order('created_at', { ascending: false }),
           supabase
             .from('hr_requests')
-            .select('*')
+            .select('id, user_id, type, title, description, status, created_at, updated_at, attachment_url')
             .eq('status', 'pendiente')
             .order('created_at', { ascending: false }),
           supabase
             .from('schedules')
-            .select('*')
+            .select('id, user_id, scheduled_date, shift_type, start_time, end_time')
             .eq('scheduled_date', today),
           supabase
             .from('attendance_logs')

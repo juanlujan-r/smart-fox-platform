@@ -85,29 +85,29 @@ export default function EmployeeDetailModal({
           .limit(100),
         supabase
           .from('hr_requests')
-          .select('*')
+          .select('id, user_id, type, title, status, start_date, end_date, created_at')
           .eq('user_id', employeeId)
           .in('type', ['permiso', 'licencia', 'vacaciones']),
         supabase
           .from('disciplinary_actions')
-          .select('*')
+          .select('id, user_id, type, description, created_by, created_at, expires_at')
           .eq('user_id', employeeId)
           .order('created_at', { ascending: false }),
         supabase
           .from('schedules')
-          .select('*')
+          .select('id, user_id, scheduled_date, start_time, end_time, shift_type')
           .eq('user_id', employeeId)
           .order('scheduled_date', { ascending: false })
           .limit(30),
         supabase
           .from('hr_requests')
-          .select('*')
+          .select('id, user_id, type, title, description, created_at')
           .eq('user_id', employeeId)
           .eq('type', 'novedad')
           .order('created_at', { ascending: false }),
         supabase
           .from('attendance_logs')
-          .select('*')
+          .select('id, user_id, state, type, created_at, updated_at')
           .eq('user_id', employeeId)
           .order('created_at', { ascending: false })
           .limit(50),
